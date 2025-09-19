@@ -29,23 +29,12 @@ client.connect(HiveMQ_configure.HIVEMQ_CLUSTER_URL, HiveMQ_configure.HIVEMQ_PORT
 
 client.loop_start()
 
-#client.on_subscribe = on_subscribe
-#client.on_message = on_message
 client.on_publish = on_publish
 
-# TODO: maybe create separate file for the preprocessing of the data, the preprocessing should probably done on the digital twin side
-#  as in real life scenario we could not preprocess al the data at once but only the data that is received at each timestamp.
-# Things as renaming the column and converting to datetime objects casn be done on publisher side.
-# Read the data into pandas dataframe
 heavy_user_data = pd.read_csv("data/heavy_user.csv")
 
 # Give the timestamp column a name
 heavy_user_data.rename(columns={"Unnamed: 0": "TimeStamp"}, inplace=True)
-
-# TODO: convert the timestamps to datetime, this has to be done in later stage on receiver side as json does not accept datetime objects
-#heavy_user_data["TimeStamp"] = pd.to_datetime(heavy_user_data["TimeStamp"])
-
-
 
 for index, row in heavy_user_data.iterrows():
     # Extract the data from the row
@@ -81,8 +70,6 @@ for index, row in heavy_user_data.iterrows():
 client.loop_stop()
 client.disconnect()
 
-# need this in the receiver i think
-#client.loop_forever()
 
 
 

@@ -4,6 +4,9 @@ import paho.mqtt.client as paho
 from paho import mqtt
 
 import HiveMQ_configure
+from System_State import DigitalTwin
+
+digital_twin = DigitalTwin()
 
 def on_connect(client, userdata, flags, rc, properties=None):
     print("CONNACK received with code %s." % rc)
@@ -17,10 +20,16 @@ def on_subscribe(client, userdata, mid, granted_qos, properties=None):
 
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
-    # TODO: probably need a function here that unpacks the data and sets the current state but also stores them in a 
-    # dataframe with all the data up until that moment 
 
+    # extract the data into a python dictionary
+    sensor_data = json.loads(msg.payload.decode())
+
+    # update the state of the digital twin with the new sensor values
+    digital_twin.update_state(sensor_data)
+
+    
 client = paho.Client(client_id="EV_data_receiver", userdata=None, protocol=paho.MQTTv5)
+
 client.on_connect = on_connect
 
 client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
