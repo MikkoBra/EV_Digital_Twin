@@ -4,11 +4,9 @@ from PySide6.QtCore import QPropertyAnimation, QEasingCurve
 class PageStack(QStackedWidget):
     def __init__(self):
         super().__init__()
-        # remove self.setGraphicsEffect(...) from here
         self.anim = None
 
     def fade_to_index(self, index: int, duration=600):
-        # create an effect on the CURRENT page only
         current_page = self.currentWidget()
         effect = QGraphicsOpacityEffect(current_page)
         current_page.setGraphicsEffect(effect)

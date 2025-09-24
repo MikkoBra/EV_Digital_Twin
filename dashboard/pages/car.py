@@ -3,18 +3,16 @@ from PySide6.QtCore import Qt, QSize, QRect
 from PySide6.QtGui import QPixmap, QPainter, QColor, QIcon
 from pathlib import Path
 from components.hotspot import Hotspot
-from pages.popup import PopupPage
+from dashboard.pages.popups.popup import PopupPage
 
 class Car(QWidget):
     def __init__(self, go_back_callback):
         super().__init__()
 
-        # --- Background ---
         image_path = Path(__file__).resolve().parent.parent / "assets" / "car.jpg"
         self.bg_pixmap = QPixmap(str(image_path))
         self.scale_factor = 0.6
 
-        # --- Back button ---
         arrow_path = Path(__file__).resolve().parent.parent / "assets" / "arrow-left.png"
         self.back_btn = QPushButton(self)
         self.back_btn.setIcon(QIcon(str(arrow_path)))
@@ -34,10 +32,8 @@ class Car(QWidget):
         self.back_btn.move(10, 10)
         self.back_btn.raise_()
 
-        # --- Clickable hotspots ---
         self.click_boxes = []
 
-        # Example hotspot
         example_box = QRect(355, 350, 130, 170)
         click_box = Hotspot(self, example_box, rotation=30)
         click_box.clicked.connect(self.show_example_popup)
@@ -61,7 +57,6 @@ class Car(QWidget):
             y = (self.height() - scaled_pix.height()) // 2
             painter.drawPixmap(x, y, scaled_pix)
 
-            # Calculate scale factors relative to original image
             scale_x = scaled_pix.width() / self.bg_pixmap.width()
             scale_y = scaled_pix.height() / self.bg_pixmap.height()
 

@@ -7,7 +7,6 @@ class Title(QWidget):
     def __init__(self, go_next_callback):
         super().__init__()
 
-        # --- Layout & Label ---
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
 
@@ -17,19 +16,15 @@ class Title(QWidget):
         label.setFont(label_font)
         layout.addWidget(label)
 
-        # --- Start Button ---
         btn = QPushButton("Start")
         btn.clicked.connect(go_next_callback)
 
-        # Font: modern, larger
-        btn_font = QFont("Segoe UI", 14, QFont.Bold)   # try "Roboto", "Helvetica", etc.
+        btn_font = QFont("Segoe UI", 14, QFont.Bold)
         btn.setFont(btn_font)
 
-        # Size: taller but not too wide
         btn.setFixedHeight(50)
         btn.setFixedWidth(160)
 
-        # Style: simple blue tech look
         btn.setStyleSheet("""
             QPushButton {
                 background-color: #2d89ef;

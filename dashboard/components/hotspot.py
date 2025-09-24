@@ -16,8 +16,8 @@ class Hotspot(QWidget):
         self.hovered = False
 
         # Base and hover colors
-        self.base_color = QColor(0, 0, 0, 0)  # fully transparent
-        self.hover_color = QColor(200, 200, 200, 100)  # light grey, partially transparent
+        self.base_color = QColor(0, 0, 0, 0)
+        self.hover_color = QColor(200, 200, 200, 100)
 
     def update_position(self, image_rect: QRect, scale_x=1.0, scale_y=1.0):
         new_w = int(self.original_rect.width() * scale_x) + 2 * self.padding
@@ -32,13 +32,12 @@ class Hotspot(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Choose color based on hover state
         color = self.hover_color if self.hovered else self.base_color
         painter.setBrush(color)
         if self.hovered:
             pen = painter.pen()
-            pen.setColor(QColor(100, 100, 100))  # gray
-            pen.setWidth(2)  # thicker border
+            pen.setColor(QColor(100, 100, 100))
+            pen.setWidth(2)
             painter.setPen(pen)
         else:
             painter.setPen(Qt.NoPen)
