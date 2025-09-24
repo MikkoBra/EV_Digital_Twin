@@ -1,11 +1,13 @@
 # EV_Digital_Twin
 Digital twin of an electric vehicle.
 
-To run the code
+To run the messaging service
 1. create virtual environment (venv)
 2. pip install requirements.txt
 3. Run Receive_Data.py
 4. In a separate terminal run Publish_data.py
+
+To run the GUI, run gui.py in the dashboard module.
 
 EV Sensors Dataset: Driving Pattern Diagnostics (2020-24)
 
