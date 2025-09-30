@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, QSize, QRect
 from PySide6.QtGui import QPixmap, QPainter, QColor, QIcon
 from pathlib import Path
 from components.hotspot import Hotspot
-from dashboard.pages.popups.popup import PopupPage
+from pages.popups.popup import PopupPage
 
 class Car(QWidget):
     def __init__(self, go_back_callback):
