@@ -32,12 +32,44 @@ class Car(QWidget):
         self.back_btn.move(10, 10)
         self.back_btn.raise_()
 
-        self.click_boxes = []
+        self.hotspots = []
 
-        example_box = QRect(355, 350, 130, 170)
-        click_box = Hotspot(self, example_box, rotation=30)
-        click_box.clicked.connect(self.show_example_popup)
-        self.click_boxes.append(click_box)
+        battery = QRect(380, 210, 177, 187)
+        battery_hotspot = Hotspot(
+            self,
+            battery,
+            shape="square",
+            rotation=25,
+            shear_x=-0.80,
+            shear_y=-0.05,
+            padding=60
+        )
+        battery_hotspot.clicked.connect(self.show_battery_popup)
+        self.hotspots.append(battery_hotspot)
+        
+        self.init_wheels()
+    
+    def init_wheels(self):
+        r_f_wheel_rect = QRect(139, 265, 122, 140)
+        r_f_wheel_hotspot = Hotspot(self, r_f_wheel_rect, rotation=30, shape="circle", group="wheels")
+        r_f_wheel_hotspot.clicked.connect(self.show_wheel_popup)
+        self.hotspots.append(r_f_wheel_hotspot)
+
+        l_f_wheel_rect = QRect(358, 352, 122, 162)
+        l_f_wheel_hotspot = Hotspot(self, l_f_wheel_rect, rotation=30, shape="circle", group="wheels")
+        l_f_wheel_hotspot.clicked.connect(self.show_wheel_popup)
+        self.hotspots.append(l_f_wheel_hotspot)
+
+        r_b_wheel_rect = QRect(685, 190, 95, 140)
+        r_b_wheel_hotspot = Hotspot(self, r_b_wheel_rect, rotation=28, shape="circle", group="wheels")
+        r_b_wheel_hotspot.clicked.connect(self.show_wheel_popup)
+        self.hotspots.append(r_b_wheel_hotspot)
+
+        l_b_wheel_rect = QRect(477, 120, 92, 117)
+        l_b_wheel_hotspot = Hotspot(self, l_b_wheel_rect, rotation=30, shape="circle", group="wheels")
+        l_b_wheel_hotspot.clicked.connect(self.show_wheel_popup)
+        self.hotspots.append(l_b_wheel_hotspot)
+
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -61,12 +93,17 @@ class Car(QWidget):
             scale_y = scaled_pix.height() / self.bg_pixmap.height()
 
             image_rect = QRect(x, y, scaled_pix.width(), scaled_pix.height())
-            for box in self.click_boxes:
+            for box in self.hotspots:
                 box.update_position(image_rect, scale_x, scale_y)
 
         super().paintEvent(event)
 
-    def show_example_popup(self):
+    def show_wheel_popup(self):
         """Show the separate popup page."""
-        popup = PopupPage(title="Example Popup", content_text="This is a popup placeholder", parent=self)
+        popup = PopupPage(title="Example Popup", content_text="This is a wheel placeholder", parent=self)
+        popup.exec()
+
+    def show_battery_popup(self):
+        """Show the separate popup page."""
+        popup = PopupPage(title="Example Popup", content_text="This is a battery placeholder", parent=self)
         popup.exec()
