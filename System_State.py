@@ -1,12 +1,12 @@
-
 import pandas as pd
 import plotly.express as px
+import io
 
 
 class State:
-      def __init__(self, TimeStamp, SOC, SOH, Charging_Cycles,
-                 Battery_Temp, Motor_RPM, Motor_Torque, Motor_Temp,
-                 Brake_Pad_Wear, Charging_Voltage, Tire_Pressure, DTC):
+    def __init__(self, TimeStamp, SOC, SOH, Charging_Cycles,
+                Battery_Temp, Motor_RPM, Motor_Torque, Motor_Temp,
+                Brake_Pad_Wear, Charging_Voltage, Tire_Pressure, DTC):
         self.timestamp = TimeStamp
         self.soc = SOC
         self.soh = SOH
@@ -42,13 +42,10 @@ class DigitalTwin:
     # View the historical data of a specific sensor, this function can be called when an anomaly occurs such that the user can directly view the data of that
     # component. Can also be called when the user wants to view a specific timeframe of the data.
     def visualize_history(self, column, start_date=None, end_date=None):
-        # copy the historical dataset so we can potentially get a subset from it 
-        temp_historical_dataset = self.historical_dataset
-
-        # convert the timestamps to datetime objects so we can compare them
+        temp_historical_dataset = self.historical_dataset.copy()
         temp_historical_dataset['TimeStamp'] = pd.to_datetime(temp_historical_dataset['TimeStamp'])
 
-        # create the subset of the data which needs to be viualized
+        # Filter by date range
         if start_date is not None:
             start = pd.to_datetime(start_date)
             temp_historical_dataset = temp_historical_dataset[temp_historical_dataset['TimeStamp'] >= start]
@@ -56,7 +53,19 @@ class DigitalTwin:
             end = pd.to_datetime(end_date)
             temp_historical_dataset = temp_historical_dataset[temp_historical_dataset['TimeStamp'] <= end]
 
-        # plot the data
-        fig = px.line(temp_historical_dataset, x='TimeStamp', y=column)
-        fig.show()
+        # Create plot
+        fig = px.line(temp_historical_dataset, x='TimeStamp', y=column, title=f"{column} Over Time")
+
+        img_bytes = fig.to_image(format="png")
+        return io.BytesIO(img_bytes)
+    
+    def get_current_state(self):
+        """
+        Returns the current state of the digital twin as a dictionary.
+        If no state is set yet, returns None.
+        """
+        if self.current_state is None:
+            return None
+        return self.current_state.to_dict()
+    
     
