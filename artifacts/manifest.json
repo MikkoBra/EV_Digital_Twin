@@ -1,0 +1,46 @@
+{
+  "model_path": "artifacts\\lstm_dtc.keras.keras",
+  "bundle_path": "artifacts\\scaler.npy",
+  "config_path": "artifacts\\config.json",
+  "threshold": 0.5,
+  "seq_len": 48,
+  "horizon": 1,
+  "features": [
+    "SOC",
+    "SOH",
+    "Charging_Cycles",
+    "Battery_Temp",
+    "Motor_RPM",
+    "Motor_Torque",
+    "Motor_Temp",
+    "Brake_Pad_Wear",
+    "Tire_Pressure"
+  ],
+  "group_col": "vehicle",
+  "masked_flags": {
+    "SOC": null,
+    "SOH": null,
+    "Charging_Cycles": null,
+    "Battery_Temp": null,
+    "Motor_RPM": null,
+    "Motor_Torque": null,
+    "Motor_Temp": null,
+    "Brake_Pad_Wear": null,
+    "Tire_Pressure": null
+  },
+  "policy": {
+    "SOC": "standard",
+    "SOH": "standard",
+    "Charging_Cycles": "standard",
+    "Battery_Temp": "standard",
+    "Motor_RPM": "standard",
+    "Motor_Torque": "standard",
+    "Motor_Temp": "standard",
+    "Brake_Pad_Wear": "standard",
+    "Tire_Pressure": "standard"
+  },
+  "versions": {
+    "tf": "2.10.0",
+    "model_version": "v1"
+  }
+}
