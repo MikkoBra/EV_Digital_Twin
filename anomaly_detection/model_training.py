@@ -4,6 +4,7 @@ import joblib
 from sklearn.preprocessing import RobustScaler
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import IsolationForest
+from model_configure import WINDOW_SIZE
 
 # read the data into pandas dataframe
 ev_data = pd.read_csv("data/heavy_user.csv")
@@ -24,24 +25,18 @@ ev_reduced_cols = [col for col in ev_data.columns if col not in features_exclude
 
 #this is only for the training and testing of the model for runtime predictions we need to obtain the lag features via the historical states in the digital twin
 # here we can just shift the columns because we already have the full dataset.
-#TODO: morgen even overleggen of we dit erin houden of niet
-
-# set the size for the lag and window features
-window_lag_size = 100
-
-#
 for col in ev_reduced_cols:
      
      # add the rolling features
-     ev_data[f"{col}_rolling-{window_lag_size}_std"] = ev_data[col].rolling(window=window_lag_size, min_periods=window_lag_size).std()
-     ev_data[f"{col}_rolling-{window_lag_size}_mean"] = ev_data[col].rolling(window=window_lag_size, min_periods=window_lag_size).mean()
+     ev_data[f"{col}_rolling-{WINDOW_SIZE}_std"] = ev_data[col].rolling(window=WINDOW_SIZE, min_periods=WINDOW_SIZE).std()
+     ev_data[f"{col}_rolling-{WINDOW_SIZE}_mean"] = ev_data[col].rolling(window=WINDOW_SIZE, min_periods=WINDOW_SIZE).mean()
      
      # add the lag features
-     for i in range(1, window_lag_size + 1):
+     for i in range(1, WINDOW_SIZE + 1):
         ev_data[f"{col}_lag-{i}"] = ev_data[col].shift(i)
 
 
-# this drops the first window_lag_size rows/hours of data because the lag features have missing values because there is not enough historical data available yet
+# this drops the first WINDOW_SIZE rows/hours of data because the lag features have missing values because there is not enough historical data available yet
 ev_data.dropna(inplace=True)
 
 n_months = 12

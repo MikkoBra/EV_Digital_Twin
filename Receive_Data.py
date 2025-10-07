@@ -6,6 +6,11 @@ from paho import mqtt
 import HiveMQ_configure
 from PySide6.QtCore import QObject, Signal
 from System_State import DigitalTwin
+import pandas as pd
+import warnings
+
+warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
+warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
 class ReceiverSignals(QObject):
     new_data = Signal(object)
