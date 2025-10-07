@@ -19,6 +19,23 @@ class State:
         self.charging_voltage = Charging_Voltage
         self.tire_pressure = Tire_Pressure
         self.dtc = DTC
+    
+    def to_dict(self):
+        """Convert State to dictionary."""
+        return {
+            'TimeStamp': self.timestamp,
+            'SOC': self.soc,
+            'SOH': self.soh,
+            'Charging_Cycles': self.charging_cycles,
+            'Battery_Temp': self.battery_temp,
+            'Motor_RPM': self.motor_rpm,
+            'Motor_Torque': self.motor_torque,
+            'Motor_Temp': self.motor_temp,
+            'Brake_Pad_Wear': self.brake_pad_wear,
+            'Charging_Voltage': self.charging_voltage,
+            'Tire_Pressure': self.tire_pressure,
+            'DTC': self.dtc
+        }
 
 
 

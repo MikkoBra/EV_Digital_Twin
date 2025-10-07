@@ -5,13 +5,15 @@ from pathlib import Path
 from components.hotspot import Hotspot
 from pages.popups.popup import PopupPage
 from pages.popups.run_settings import RunSettings
+from pages.popups.plot_popup import BatteryPopup, MotorPopup, WheelPopup
 from services.data_handler import DataHandler
 
 
 class Car(QWidget):
-    def __init__(self, go_back_callback):
+    def __init__(self, go_back_callback, digital_twin=None):
         super().__init__()
-        self.data_handler = DataHandler()
+        self.digital_twin = digital_twin
+        self.data_handler = DataHandler(digital_twin=digital_twin)
 
         image_path = Path(__file__).resolve().parent.parent / "assets" / "car.jpg"
         self.bg_pixmap = QPixmap(str(image_path))
@@ -88,6 +90,7 @@ class Car(QWidget):
         self.hotspots.append(battery_hotspot)
 
         self.init_wheels()
+        self.init_motor()
         self.init_text_boxes()
         self.data_handler.new_data_signal.connect(self.update_text_boxes)
     
@@ -196,6 +199,20 @@ class Car(QWidget):
         l_b_wheel_hotspot = Hotspot(self, l_b_wheel_rect, rotation=30, shape="circle", group="wheels")
         l_b_wheel_hotspot.clicked.connect(self.show_wheel_popup)
         self.hotspots.append(l_b_wheel_hotspot)
+    
+    def init_motor(self):
+        """Initialize motor hotspots - front and rear motors with grouped behavior."""
+        # Front motor (between front wheels)
+        front_motor_rect = QRect(240, 280, 140, 100)
+        front_motor_hotspot = Hotspot(self, front_motor_rect, rotation=30, shape="square", padding=20, group="motors")
+        front_motor_hotspot.clicked.connect(self.show_motor_popup)
+        self.hotspots.append(front_motor_hotspot)
+        
+        # Rear motor (battery area, slightly behind center)
+        rear_motor_rect = QRect(550, 180, 120, 90)
+        rear_motor_hotspot = Hotspot(self, rear_motor_rect, rotation=28, shape="square", padding=20, group="motors")
+        rear_motor_hotspot.clicked.connect(self.show_motor_popup)
+        self.hotspots.append(rear_motor_hotspot)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -225,11 +242,33 @@ class Car(QWidget):
         super().paintEvent(event)
 
     def show_wheel_popup(self):
-        popup = PopupPage(title="Wheel Info", content_text="This is a wheel placeholder.", parent=self)
+        popup = WheelPopup(
+            digital_twin=self.digital_twin,
+            current_state=self.data_handler.receiver.digital_twin.current_state if hasattr(self.data_handler.receiver, 'digital_twin') else None,
+            parent=self
+        )
         popup.exec()
 
     def show_battery_popup(self):
-        popup = PopupPage(title="Battery Info", content_text="This is a battery placeholder.", parent=self)
+        # Get current state from digital twin
+        current_state = self.digital_twin.current_state if self.digital_twin else None
+        
+        popup = BatteryPopup(
+            digital_twin=self.digital_twin,
+            current_state=current_state,
+            parent=self
+        )
+        popup.exec()
+    
+    def show_motor_popup(self):
+        """Show motor status popup with live plots."""
+        current_state = self.digital_twin.current_state if self.digital_twin else None
+        
+        popup = MotorPopup(
+            digital_twin=self.digital_twin,
+            current_state=current_state,
+            parent=self
+        )
         popup.exec()
 
     def show_run_popup(self):
