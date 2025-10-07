@@ -33,7 +33,7 @@ window_lag_size = 100
 for col in ev_reduced_cols:
      
      # add the rolling features
-     ev_data[f"{col}_rolling-{window_lag_size}_mean"] = ev_data[col].rolling(window=window_lag_size, min_periods=window_lag_size).std()
+     ev_data[f"{col}_rolling-{window_lag_size}_std"] = ev_data[col].rolling(window=window_lag_size, min_periods=window_lag_size).std()
      ev_data[f"{col}_rolling-{window_lag_size}_mean"] = ev_data[col].rolling(window=window_lag_size, min_periods=window_lag_size).mean()
      
      # add the lag features
@@ -95,12 +95,12 @@ scaled_data = scaler.transform(ev_data_reduced)
 scaled_df = pd.DataFrame(scaled_data, columns=ev_data_reduced.columns)
 
 # train en test split without shuffle to keep the order intact
-X_train, X_test = train_test_split(ev_data_reduced, test_size=0.2, shuffle=False)
+X_train, X_test = train_test_split(scaled_df, test_size=0.2, shuffle=False)
 
 # train the model on the trainings data
 IF_model = IsolationForest(random_state=0, contamination=0.03).fit(X_train)
 
-
+# store the scale and model parameters
 joblib.dump(scaler, "anomaly_detection/scaler.joblib")
 joblib.dump(IF_model, "anomaly_detection/IF_anomaly_model.joblib")
 
