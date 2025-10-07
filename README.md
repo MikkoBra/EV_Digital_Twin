@@ -7,6 +7,9 @@ To run the messaging service
 3. Run Receive_Data.py
 4. In a separate terminal run Publish_data.py
 
+To be able to have the anomaly detection first run:
+python anomaly_detection/model_training.py
+
 To run the GUI, run gui.py in the dashboard module.
 
 EV Sensors Dataset: Driving Pattern Diagnostics (2020-24)
