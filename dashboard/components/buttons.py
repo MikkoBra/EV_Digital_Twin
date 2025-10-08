@@ -54,3 +54,14 @@ class StopButton(IconButton):
             parent=parent
         )
         self.setIconSize(QSize(14, 14))
+
+class PauseButton(IconButton):
+    def __init__(self, icon_path, callback, parent=None):
+        super().__init__(
+            icon_path=icon_path,
+            color="#ffc107",
+            hover_color="#e0a800",
+            callback=callback,
+            parent=parent
+        )
+        self.setIconSize(QSize(20, 20))

@@ -12,6 +12,7 @@ class EVDataPublisher:
         self.topic = topic
         self.playback_rate = playback_rate
         self._running = False
+        self._paused = False
         self.start_datetime = None  # Optional: start from specific datetime
 
         # Initialize MQTT client
@@ -61,6 +62,13 @@ class EVDataPublisher:
             if not self._running:
                 print("⏹️ Publishing stopped.")
                 break
+            
+            # Wait while paused
+            while self._paused and self._running:
+                time.sleep(0.1)
+            
+            if not self._running:
+                break
 
             data = row.to_dict()
             # Convert Timestamp to string if it's a datetime object
@@ -83,9 +91,20 @@ class EVDataPublisher:
         finally:
             self.disconnect()
     
+    def pause(self):
+        """Pause the publisher."""
+        self._paused = True
+        print("⏸️ Publisher paused.")
+    
+    def resume(self):
+        """Resume the publisher."""
+        self._paused = False
+        print("▶️ Publisher resumed.")
+    
     def stop(self):
         """Signal the publisher to stop publishing."""
         self._running = False
+        self._paused = False
 
 
 if __name__ == "__main__":

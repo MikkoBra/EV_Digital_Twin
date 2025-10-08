@@ -7,7 +7,7 @@ from pages.popups.popup import PopupPage
 from pages.popups.run_settings import RunSettings
 from pages.popups.plot_popup import BatteryPopup, MotorPopup, WheelPopup
 from services.data_handler import DataHandler
-from components.buttons import BackButton, RunButton, StopButton
+from components.buttons import BackButton, RunButton, StopButton, PauseButton
 from components.meters import BatteryMeter, TachoMeter
 
 
@@ -32,10 +32,16 @@ class Car(QWidget):
         self.run_btn = RunButton(play_icon_path, self.show_run_popup, parent=self)
         self.run_btn.move(self.back_btn.x() + self.back_btn.width() + 10, 10)
 
+        # === Pause Button (Orange) ===
+        pause_icon_path = Path(__file__).resolve().parent.parent / "assets" / "pause_button.png"
+        self.pause_btn = PauseButton(pause_icon_path, self.toggle_pause, parent=self)
+        self.pause_btn.move(self.run_btn.x() + self.run_btn.width() + 10, 10)
+        self.is_paused = False
+
         # === Stop Button (Red) ===
         stop_icon_path = Path(__file__).resolve().parent.parent / "assets" / "stop-button.png"
         self.stop_btn = StopButton(stop_icon_path, self.stop_run, parent=self)
-        self.stop_btn.move(self.run_btn.x() + self.run_btn.width() + 10, 10)
+        self.stop_btn.move(self.pause_btn.x() + self.pause_btn.width() + 10, 10)
 
         # === DateTime Display ===
         self.datetime_label = QLabel("----------- --:--:--", parent=self)
@@ -98,24 +104,13 @@ class Car(QWidget):
         anomaly_title.setAlignment(Qt.AlignCenter)
         status_layout.addWidget(anomaly_title)
         
-        # Anomaly status indicator (green/orange/red circle + text)
-        anomaly_container = QWidget()
-        anomaly_layout = QHBoxLayout(anomaly_container)
-        anomaly_layout.setContentsMargins(0, 0, 0, 0)
-        anomaly_container.setStyleSheet("border: none; background: transparent;")
-        
-        self.anomaly_indicator = QLabel("●")
-        self.anomaly_indicator.setFont(QFont("Segoe UI", 20))
-        self.anomaly_indicator.setStyleSheet("color: #4CAF50; border: none; background: transparent;")  # Green by default
-        anomaly_layout.addWidget(self.anomaly_indicator)
-        
+        # Anomaly status indicator (centered text like DTC)
         self.anomaly_text = QLabel("Normal")
         self.anomaly_text.setFont(value_font)
-        self.anomaly_text.setStyleSheet("color: #333; border: none; background: transparent;")
-        anomaly_layout.addWidget(self.anomaly_text)
-        anomaly_layout.addStretch()
-        
-        status_layout.addWidget(anomaly_container)
+        self.anomaly_text.setStyleSheet("color: #4CAF50; border: none; background: transparent;")
+        self.anomaly_text.setAlignment(Qt.AlignCenter)
+        self.anomaly_text.setWordWrap(True)
+        status_layout.addWidget(self.anomaly_text)
         
         # === DTC Prediction ===
         dtc_title = QLabel("DTC Prediction (24h)")
@@ -132,10 +127,8 @@ class Car(QWidget):
         self.dtc_prediction_label.setWordWrap(True)
         status_layout.addWidget(self.dtc_prediction_label)
         
-        status_layout.addStretch()
-        
         # Position will be set in resizeEvent
-        self.status_panel.setFixedSize(220, 160)
+        self.status_panel.setFixedSize(220, 130)
     
     def init_text_boxes(self):
         """Create right-side panel with parameter boxes."""
@@ -266,15 +259,15 @@ class Car(QWidget):
             score = state.anomaly_score
             
             # Determine color based on score thresholds:
-            # Red if score < -0.25 (critical anomaly)
-            # Orange if -0.25 <= score < 0 (warning/anomaly)
+            # Red if score < -0.25 (anomaly)
+            # Orange if -0.25 <= score < 0 (warning)
             # Green otherwise (normal)
             if score < -0.25:
                 color = "#F44336"  # Red
-                text = f"Critical ({score:.3f})"
+                text = f"Anomaly ({score:.3f})"
             elif score < 0:
                 color = "#FF9800"  # Orange
-                text = f"Anomaly ({score:.3f})"
+                text = f"Warning ({score:.3f})"
             else:
                 color = "#4CAF50"  # Green
                 text = f"Normal ({score:.3f})"
@@ -283,7 +276,6 @@ class Car(QWidget):
             color = "#9E9E9E"  # Grey
             text = "Calculating..."
         
-        self.anomaly_indicator.setStyleSheet(f"color: {color}; border: none; background: transparent;")
         self.anomaly_text.setText(text)
         self.anomaly_text.setStyleSheet(f"color: {color}; border: none; background: transparent;")
         
@@ -444,5 +436,19 @@ class Car(QWidget):
         print(f"Start DateTime: {start_datetime}")
         self.data_handler.start_run(playback_speed, data_window, start_datetime)
     
+    def toggle_pause(self):
+        """Toggle pause/resume of the simulation."""
+        if self.is_paused:
+            # Resume
+            self.data_handler.resume_run()
+            self.is_paused = False
+            print("Simulation resumed")
+        else:
+            # Pause
+            self.data_handler.pause_run()
+            self.is_paused = True
+            print("Simulation paused")
+    
     def stop_run(self):
         self.data_handler.stop_run()
+        self.is_paused = False  # Reset pause state when stopping

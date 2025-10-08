@@ -28,6 +28,7 @@ class DataHandler(QObject):
         self.receiver = EVDataReceiver()
         self.receiver.new_data.connect(self.handle_new_data)
         self._threads = []
+        self.is_paused = False
 
     def start_run(self, playback_speed, data_window, start_datetime=None):
         # Reset digital twin data for new run
@@ -95,8 +96,21 @@ class DataHandler(QObject):
         self.tire_pressure_changed.emit(current_state.tire_pressure)
         self.dtc_changed.emit(str(current_state.dtc))
 
+    def pause_run(self):
+        """Pause the simulation by pausing the publisher."""
+        self.is_paused = True
+        self.publisher.pause()
+        print("DataHandler: Simulation paused")
+    
+    def resume_run(self):
+        """Resume the simulation by resuming the publisher."""
+        self.is_paused = False
+        self.publisher.resume()
+        print("DataHandler: Simulation resumed")
+
     def stop_run(self):
         """Stop publisher and receiver threads cleanly"""
+        self.is_paused = False
         self.publisher.stop()
         self.receiver.stop()
         for t in self._threads:
