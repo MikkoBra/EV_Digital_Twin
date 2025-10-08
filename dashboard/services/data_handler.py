@@ -21,15 +21,33 @@ class DataHandler(QObject):
     # tire_pressure_changed = Signal(float)
     # dtc_changed = Signal(str)
 
-    def __init__(self):
+    def __init__(self, digital_twin=None):
         super().__init__()
+        self.digital_twin = digital_twin
         self.publisher = EVDataPublisher(csv_path="data/heavy_user.csv")
         self.receiver = EVDataReceiver()
         self.receiver.new_data.connect(self.handle_new_data)
         self._threads = []
 
-    def start_run(self, playback_speed, data_window):
+    def start_run(self, playback_speed, data_window, start_datetime=None):
+        # Reset digital twin data for new run
+        if self.digital_twin:
+            import pandas as pd
+            self.digital_twin.historical_dataset = pd.DataFrame(columns=[
+                'TimeStamp', 'SOC', 'SOH', 'Charging_Cycles', 'Battery_Temp',
+                'Motor_RPM', 'Motor_Torque', 'Motor_Temp', 'Brake_Pad_Wear',
+                'Charging_Voltage', 'Tire_Pressure', 'DTC'
+            ])
+            self.digital_twin.historical_states = []
+            self.digital_twin.current_state = None
+        
         self.publisher.playback_rate = playback_speed
+        
+        # Set start datetime if provided
+        if start_datetime:
+            self.publisher.start_datetime = start_datetime
+        else:
+            self.publisher.start_datetime = None
 
         # Start receiver in background thread
         receiver_thread = threading.Thread(target=self.receiver.run, daemon=True)
@@ -43,6 +61,24 @@ class DataHandler(QObject):
 
     def handle_new_data(self, current_state):
         """Thread-safe emission of all signals to GUI thread"""
+        # Update digital twin with new state
+        if self.digital_twin:
+            sensor_data = {
+                'TimeStamp': current_state.timestamp,
+                'SOC': current_state.soc,
+                'SOH': current_state.soh,
+                'Charging_Cycles': current_state.charging_cycles,
+                'Battery_Temp': current_state.battery_temp,
+                'Motor_RPM': current_state.motor_rpm,
+                'Motor_Torque': current_state.motor_torque,
+                'Motor_Temp': current_state.motor_temp,
+                'Brake_Pad_Wear': current_state.brake_pad_wear,
+                'Charging_Voltage': current_state.charging_voltage,
+                'Tire_Pressure': current_state.tire_pressure,
+                'DTC': current_state.dtc
+            }
+            self.digital_twin.update_state(sensor_data)
+        
         self.new_data_signal.emit(current_state)
 
     def _emit_signals(self, current_state):

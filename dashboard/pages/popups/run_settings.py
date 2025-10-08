@@ -1,19 +1,19 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QSlider, QLineEdit,
-    QPushButton, QHBoxLayout, QMessageBox
+    QPushButton, QHBoxLayout, QMessageBox, QDateTimeEdit, QCheckBox
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QDateTime
 
 
 class RunSettings(QDialog):
-    """Popup for run configuration: playback speed and data window."""
-    start_run = Signal(float, int)  # emits seconds per message and data window
+    """Popup for run configuration: playback speed, data window, and start datetime."""
+    start_run = Signal(float, int, str)  # emits seconds per message, data window, and start datetime (ISO string or None)
 
     def __init__(self, title="Run Settings", parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setModal(True)
-        self.resize(400, 250)
+        self.resize(400, 350)
 
         # Layouts
         main_layout = QVBoxLayout(self)
@@ -43,6 +43,25 @@ class RunSettings(QDialog):
         main_layout.addWidget(window_label)
         main_layout.addWidget(self.window_input)
 
+        # === Custom start datetime ===
+        self.use_custom_start_checkbox = QCheckBox("Start from custom datetime", self)
+        self.use_custom_start_checkbox.setChecked(False)
+        self.use_custom_start_checkbox.toggled.connect(self.toggle_datetime_picker)
+        main_layout.addWidget(self.use_custom_start_checkbox)
+
+        datetime_label = QLabel("Start DateTime:", self)
+        self.datetime_picker = QDateTimeEdit(self)
+        self.datetime_picker.setCalendarPopup(True)
+        self.datetime_picker.setDisplayFormat("yyyy-MM-dd HH:00:00")
+        # Set default to 2020-01-01 00:00:00
+        default_datetime = QDateTime(2020, 1, 1, 0, 0, 0)
+        self.datetime_picker.setDateTime(default_datetime)
+        # Configure time edit to only allow whole hours
+        self.datetime_picker.setTimeSpec(Qt.LocalTime)
+        self.datetime_picker.setEnabled(False)  # Disabled by default
+        main_layout.addWidget(datetime_label)
+        main_layout.addWidget(self.datetime_picker)
+
         # === Start button ===
         button_layout = QHBoxLayout()
         start_button = QPushButton("Start", self)
@@ -68,9 +87,13 @@ class RunSettings(QDialog):
         """Update label to show messages per second."""
         msg_per_sec = self.speed_slider.value()
         self.speed_value_label.setText(f"{msg_per_sec}")
+    
+    def toggle_datetime_picker(self, checked):
+        """Enable/disable datetime picker based on checkbox."""
+        self.datetime_picker.setEnabled(checked)
 
     def handle_start(self):
-        """Validate inputs and emit start_run signal with seconds per message."""
+        """Validate inputs and emit start_run signal with seconds per message and optional start datetime."""
         msg_per_sec = self.speed_slider.value()
         playback_rate = 1.0 / msg_per_sec  # seconds per message
 
@@ -92,5 +115,14 @@ class RunSettings(QDialog):
             )
             return
 
+        # Get start datetime if custom start is enabled
+        start_datetime = None
+        if self.use_custom_start_checkbox.isChecked():
+            # Convert QDateTime to ISO string format (hele uren)
+            dt = self.datetime_picker.dateTime()
+            # Zorg dat minuten en seconden 0 zijn
+            dt.setTime(dt.time().addSecs(-dt.time().minute() * 60 - dt.time().second()))
+            start_datetime = dt.toString("yyyy-MM-ddTHH:00:00")
+
         self.accept()  # close the dialog
-        self.start_run.emit(playback_rate, data_window)
+        self.start_run.emit(playback_rate, data_window, start_datetime)

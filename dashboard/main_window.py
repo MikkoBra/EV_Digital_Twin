@@ -2,11 +2,19 @@ from PySide6.QtWidgets import QMainWindow
 from page_stack import PageStack
 from pages.title import Title
 from pages.car import Car
+import sys
+from pathlib import Path
+# Add parent directory to path to import System_State
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from System_State import DigitalTwin
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("EV Digital Twin")
+        
+        # Initialize Digital Twin for historical data
+        self.digital_twin = DigitalTwin()
 
         self.base_width = 930
         self.base_height = 550
@@ -16,7 +24,7 @@ class MainWindow(QMainWindow):
 
         self.stack = PageStack()
         page1 = Title(lambda: self.stack.fade_to_index(1))
-        page2 = Car(lambda: self.stack.fade_to_index(0))
+        page2 = Car(lambda: self.stack.fade_to_index(0), digital_twin=self.digital_twin)
 
         self.stack.addWidget(page1)
         self.stack.addWidget(page2)
