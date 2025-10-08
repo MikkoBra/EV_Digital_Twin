@@ -65,6 +65,7 @@ class DigitalTwin:
             current_state.is_anomaly = is_anomaly
             current_state.anomaly_score = anomaly_score
 
+            # TODO: this print statement can be removed
             print(
                 f"On Timestamp: {current_state.timestamp}, "
                 f"Is Anomaly: {current_state.is_anomaly}, "
