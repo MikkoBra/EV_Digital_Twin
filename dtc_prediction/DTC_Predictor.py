@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from preprocess import transform 
+from .preprocess import transform 
 THRESHOLD=0.5
 
 def predict(data, model, scaler, seq_len=48):

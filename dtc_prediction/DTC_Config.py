@@ -33,7 +33,7 @@ class Config:
 
     seed: int = 47
     model_dir: str = "models"
-    model_name: str = "lstm_dtc.keras"
+    model_name: str = "lstm_dtc_v3.keras"  # New Keras 3 format
     scaler_name: str = "scaler_dtc.npy"
     config_name: str = "config_dtc.json"
 
@@ -51,7 +51,13 @@ MASKED_COLS = {
     "rpm_pos_log": "is_moving",
     "torque_pos_log": "has_torque",
 }
+
 def get_model_path() -> str:
-    return path.join(Config.model_dir, Config.model_name)
+    # Use absolute path relative to this file's location
+    base_dir = path.dirname(path.dirname(path.abspath(__file__)))
+    return path.join(base_dir, Config.model_dir, Config.model_name)
+
 def get_scaler_path() -> str:
-    return path.join(Config.model_dir, Config.scaler_name)  
+    # Use absolute path relative to this file's location
+    base_dir = path.dirname(path.dirname(path.abspath(__file__)))
+    return path.join(base_dir, Config.model_dir, Config.scaler_name)  

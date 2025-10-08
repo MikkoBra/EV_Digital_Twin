@@ -4,14 +4,15 @@ import plotly.express as px
 import anomaly_detection.anomaly_detection as ad
 import io
 import joblib
+import tensorflow as tf
 import anomaly_detection.model_configure as ad_config
-from DTC_Config import Config as dtc_cfg
-import DTC_Predictor as dtc_pred
+from dtc_prediction.DTC_Config import Config as dtc_cfg, get_model_path, get_scaler_path
+import dtc_prediction.DTC_Predictor as dtc_pred
 import os
 
 
 class State:
-      def __init__(self, TimeStamp, SOC, SOH, Charging_Cycles,
+    def __init__(self, TimeStamp, SOC, SOH, Charging_Cycles,
                  Battery_Temp, Motor_RPM, Motor_Torque, Motor_Temp,
                  Brake_Pad_Wear, Charging_Voltage, Tire_Pressure, DTC):
         
@@ -30,8 +31,8 @@ class State:
         self.charging_voltage = Charging_Voltage
         self.tire_pressure = Tire_Pressure
         self.dtc = DTC
-    
-    def to_dict(self):
+        
+    def to_dict(self):  
         """Convert State to dictionary."""
         return {
             'TimeStamp': self.timestamp,
@@ -62,8 +63,10 @@ class DigitalTwin:
         # load the RobustScaler and the anomaly detection model
         self.anomaly_model = joblib.load(ad_config.ANOMALY_MODEL_PATH)
         self.anomaly_scaler = joblib.load(ad_config.SCALER_PATH)
-        self.dtc_model = joblib.load(dtc_cfg.get_model_path())
-        self.dtc_scaler = joblib.load(dtc_cfg.get_scaler_path())
+        # Load DTC model with TensorFlow (it's a Keras model)
+        self.dtc_model = tf.keras.models.load_model(get_model_path())
+        # Load DTC scaler with joblib (it's a sklearn/joblib bundle)
+        self.dtc_scaler = joblib.load(get_scaler_path())
 
         #initialize the data storage structures
         self.current_state = None
