@@ -1,4 +1,4 @@
-import pandas
+import pandas as pd
 import numpy as np
 import System_State
 import anomaly_detection.model_configure as ad_config
@@ -85,9 +85,11 @@ def preprocess_data(data, scaler):
     # add domain specefic features
     data = feature_engineering(data)
 
+    # scale the data using the robust scaler as we have outliers that we do not remove
     scaled_data = scaler.transform(data)
+    scaled_df = pd.DataFrame(scaled_data, columns=data.columns)
 
-    return scaled_data
+    return scaled_df
 
 
 
