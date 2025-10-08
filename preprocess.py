@@ -3,6 +3,8 @@ import os, json, joblib
 from typing import Dict, List, Tuple, Any, Optional
 from matplotlib import pyplot as plt
 from collections import defaultdict
+from dataclasses import dataclass
+import math
 
 import numpy as np
 import pandas as pd
@@ -39,6 +41,37 @@ MASKED_COLS = {
     "rpm_pos_log": "is_moving",
     "torque_pos_log": "has_torque",
 }
+
+@dataclass
+class Config:
+    cwd = os.getcwd()
+    data_dir = path.join(cwd, "data")
+    files: Tuple[str, ...] = ("daily_user.csv", "heavy_user.csv", "moderate_user.csv", "rare_user.csv")
+    time_col: str | None = None
+    target: str = "DTC_final"
+    features: List[str] | None = None
+    timestamp_format_try: str = "%d-%m-%y %H:%M"
+
+    seq_len: int = 48
+    horizon: int = 1
+    stride: int = 1
+
+    val_ratio_last: float = 0.1
+    test_ratio_last: float = 0.2
+    optimizer: str = 'Adam'
+
+    batch_size: int = 256
+    epochs: int = 40
+    lr: float = 1e-3
+    hidden: int = 128
+    dropout: float = 0.2
+    bidirectional: bool = True
+
+    seed: int = 47
+    model_dir: str = "artifacts"
+    model_name: str = "lstm_dtc.keras"
+    scaler_name: str = "scaler.npy"
+    config_name: str = "config.json"
 
 def parse_timestamp(series: pd.Series,
                     fmt: str | None = None,
@@ -219,7 +252,7 @@ def fit_scaler(
 
     return bundle
 
-def transform(df: pd.DataFrame, features: list[str], bundle: dict) -> pd.DataFrame:
+def transform(df: pd.DataFrame, bundle: dict) -> pd.DataFrame:
     out = df.copy()
     feat_list = bundle["features"]
 
@@ -275,7 +308,6 @@ def make_windows(
         for start in range(0, end - seq_len + 1, stride):
             stop = start + seq_len
             Xs.append(feat[start:stop])
-            # label at window_end + horizon
             ys.append(int(tgt[stop - 1 + horizon]))
     if not Xs:
         return np.empty((0, seq_len, len(features))), np.empty((0,), dtype=int)
