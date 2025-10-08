@@ -16,7 +16,7 @@ class Config:
     features: List[str] | None = None
     timestamp_format_try: str = "%d-%m-%y %H:%M"
 
-    seq_len: int = 48
+    seq_len: int = 168
     horizon: int = 24
     stride: int = 1
 
@@ -51,3 +51,7 @@ MASKED_COLS = {
     "rpm_pos_log": "is_moving",
     "torque_pos_log": "has_torque",
 }
+def get_model_path() -> str:
+    return path.join(Config.model_dir, Config.model_name)
+def get_scaler_path() -> str:
+    return path.join(Config.model_dir, Config.scaler_name)  

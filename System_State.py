@@ -1,4 +1,3 @@
-# system_state.py
 from collections import deque
 from typing import Optional, Sequence, Dict, Any
 
@@ -36,17 +35,15 @@ class DigitalTwin:
             'Motor_RPM','Motor_Torque','Motor_Temp','Brake_Pad_Wear',
             'Charging_Voltage','Tire_Pressure','DTC','pred_dtc_prob','pred_dtc_label'
         ])
-        self.predictor = predictor  # instance of DtcPredictor
+        self.predictor = predictor
 
     def attach_predictor(self, predictor):
         self.predictor = predictor
 
     def update_state(self, sensor_data: Dict[str, Any]):
-        """sensor_data must include 'timestamp' and, if group-aware, 'vehicle'."""
         if self.predictor:
-            # feed raw row to predictor
             self.predictor.ingest(sensor_data)
-            veh = sensor_data.get(getattr(self.predictor, "group_col", "vehicle"), "__default__")
+            veh = sensor_data.get(getattr(self.predictor, "group_col"), "__default__")
             pred = self.predictor.predict_for(veh)
             pred_prob  = pred.get("prob_dtc_next_h") if pred.get("ready") else None
             pred_label = pred.get("pred_label") if pred.get("ready") else None
@@ -90,3 +87,12 @@ class DigitalTwin:
         if end_date is not None:
             df = df[df["timestamp"] <= pd.to_datetime(end_date)]
         px.line(df, x="timestamp", y=column).show()
+
+    def get_current_state(self):
+        """
+        Returns the current state of the digital twin as a dictionary.
+        If no state is set yet, returns None.
+        """
+        if self.current_state is None:
+            return None
+        return self.current_state.to_dict()
