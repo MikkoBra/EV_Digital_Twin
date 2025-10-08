@@ -118,7 +118,7 @@ class Car(QWidget):
         status_layout.addWidget(anomaly_container)
         
         # === DTC Prediction ===
-        dtc_title = QLabel("DTC Prediction (1h)")
+        dtc_title = QLabel("DTC Prediction (24h)")
         dtc_title.setFont(title_font)
         dtc_title.setStyleSheet("color: #333; border: none; background: transparent;")
         dtc_title.setAlignment(Qt.AlignCenter)
@@ -258,49 +258,61 @@ class Car(QWidget):
         self.update()
     
     def update_status_panel(self, state):
-        """Update anomaly detection and DTC prediction status (placeholder)."""
-        # TODO: Replace with actual anomaly detection logic
-        # For now, simple rule-based mock status based on parameter values
+        """Update anomaly detection and DTC prediction status from real model predictions."""
         
-        # Mock anomaly detection based on battery temp and motor temp
-        anomaly_detected = False
-        warning_level = 0  # 0 = normal (green), 1 = warning (orange), 2 = critical (red)
-        
-        if hasattr(state, 'battery_temp') and state.battery_temp > 50:
-            anomaly_detected = True
-            warning_level = 1
-        if hasattr(state, 'motor_temp') and state.motor_temp > 90:
-            anomaly_detected = True
-            warning_level = 2
-        if hasattr(state, 'brake_pad_wear') and state.brake_pad_wear < 2.0:
-            anomaly_detected = True
-            warning_level = max(warning_level, 1)
-        
-        # Update indicator color and text
-        if warning_level == 0:
-            self.anomaly_indicator.setStyleSheet("color: #4CAF50; border: none; background: transparent;")  # Green
-            self.anomaly_text.setText("Normal")
-            self.anomaly_text.setStyleSheet("color: #4CAF50; border: none; background: transparent;")
-        elif warning_level == 1:
-            self.anomaly_indicator.setStyleSheet("color: #FF9800; border: none; background: transparent;")  # Orange
-            self.anomaly_text.setText("Warning")
-            self.anomaly_text.setStyleSheet("color: #FF9800; border: none; background: transparent;")
+        # === Anomaly Detection ===
+        # Get anomaly score from state (if available)
+        if hasattr(state, 'anomaly_score') and state.anomaly_score is not None:
+            score = state.anomaly_score
+            
+            # Determine color based on score thresholds:
+            # Red if score < -0.25 (critical anomaly)
+            # Orange if -0.25 <= score < 0 (warning/anomaly)
+            # Green otherwise (normal)
+            if score < -0.25:
+                color = "#F44336"  # Red
+                text = f"Critical ({score:.3f})"
+            elif score < 0:
+                color = "#FF9800"  # Orange
+                text = f"Anomaly ({score:.3f})"
+            else:
+                color = "#4CAF50"  # Green
+                text = f"Normal ({score:.3f})"
         else:
-            self.anomaly_indicator.setStyleSheet("color: #F44336; border: none; background: transparent;")  # Red
-            self.anomaly_text.setText("Critical")
-            self.anomaly_text.setStyleSheet("color: #F44336; border: none; background: transparent;")
+            # No anomaly score available yet
+            color = "#9E9E9E"  # Grey
+            text = "Calculating..."
         
-        # Mock DTC prediction based on current DTC and trends
-        # TODO: Replace with actual prediction model
-        if hasattr(state, 'dtc') and state.dtc != 0:
-            self.dtc_prediction_label.setText(f"Fault code {state.dtc} may persist")
-            self.dtc_prediction_label.setStyleSheet("color: #FF9800; border: none; background: transparent;")
-        elif anomaly_detected:
-            self.dtc_prediction_label.setText("Potential fault code predicted")
-            self.dtc_prediction_label.setStyleSheet("color: #FF9800; border: none; background: transparent;")
+        self.anomaly_indicator.setStyleSheet(f"color: {color}; border: none; background: transparent;")
+        self.anomaly_text.setText(text)
+        self.anomaly_text.setStyleSheet(f"color: {color}; border: none; background: transparent;")
+        
+        # === DTC Prediction ===
+        # Get DTC probability from state (if available)
+        if hasattr(state, 'dtc_score') and state.dtc_score is not None:
+            dtc_prob = state.dtc_score
+            dtc_label = state.dtc_label if hasattr(state, 'dtc_label') else (dtc_prob >= 0.5)
+            
+            # Determine color based on probability:
+            # Red if prob >= 0.5 (fault predicted)
+            # Orange if 0.25 <= prob < 0.5 (warning)
+            # Green otherwise (no fault)
+            if dtc_prob >= 0.5:
+                dtc_color = "#F44336"  # Red
+                dtc_text = f"Fault predicted ({dtc_prob:.1%})"
+            elif dtc_prob >= 0.25:
+                dtc_color = "#FF9800"  # Orange
+                dtc_text = f"Warning ({dtc_prob:.1%})"
+            else:
+                dtc_color = "#4CAF50"  # Green
+                dtc_text = f"Normal ({dtc_prob:.1%})"
         else:
-            self.dtc_prediction_label.setText("No fault codes predicted")
-            self.dtc_prediction_label.setStyleSheet("color: #4CAF50; border: none; background: transparent;")
+            # No DTC prediction available yet
+            dtc_color = "#9E9E9E"  # Grey
+            dtc_text = "Calculating..."
+        
+        self.dtc_prediction_label.setText(dtc_text)
+        self.dtc_prediction_label.setStyleSheet(f"color: {dtc_color}; border: none; background: transparent;")
 
     def init_battery(self):
         battery = QRect(380, 210, 177, 187)

@@ -74,6 +74,10 @@ class DigitalTwin:
         self.historical_dataset = pd.DataFrame(columns=['TimeStamp', 'SOC', 'SOH', 'Charging_Cycles', 'Battery_Temp',
        'Motor_RPM', 'Motor_Torque', 'Motor_Temp', 'Brake_Pad_Wear',
        'Charging_Voltage', 'Tire_Pressure', 'DTC'])
+        
+        # Vehicle ID for DTC prediction (extracted from data file path)
+        heavy_path = os.path.join(dtc_cfg.data_dir, "heavy_user.csv")
+        self.vehicle_id = os.path.splitext(os.path.basename(heavy_path))[0].replace("_user", "")
            
         
 
