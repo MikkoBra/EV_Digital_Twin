@@ -1,0 +1,28 @@
+{
+  "files": [
+    "daily_user.csv",
+    "moderate_user.csv",
+    "rare_user.csv"
+  ],
+  "time_col": null,
+  "target": "DTC_final",
+  "features": null,
+  "timestamp_format_try": "%d-%m-%y %H:%M",
+  "seq_len": 168,
+  "horizon": 24,
+  "stride": 1,
+  "val_ratio_last": 0.1,
+  "test_ratio_last": 0.2,
+  "optimizer": "Adam",
+  "batch_size": 256,
+  "epochs": 40,
+  "lr": 0.001,
+  "hidden": 128,
+  "dropout": 0.2,
+  "bidirectional": true,
+  "seed": 47,
+  "model_dir": "models",
+  "model_name": "lstm_dtc.keras",
+  "scaler_name": "scaler_dtc.npy",
+  "config_name": "config_dtc.json"
+}

@@ -5,6 +5,10 @@ import anomaly_detection.anomaly_detection as ad
 import io
 import joblib
 import anomaly_detection.model_configure as ad_config
+from DTC_Config import Config as dtc_cfg
+import DTC_Predictor as dtc_pred
+import os
+
 
 class State:
       def __init__(self, TimeStamp, SOC, SOH, Charging_Cycles,
@@ -12,6 +16,8 @@ class State:
                  Brake_Pad_Wear, Charging_Voltage, Tire_Pressure, DTC):
         
         # Sensor data
+        heavy_path = os.path.join(dtc_cfg.data_dir, "heavy_user.csv") # 
+        self.vehicle_id = os.path.splitext(os.path.basename(heavy_path))[0].replace("_user", "")
         self.timestamp = pd.to_datetime(TimeStamp)
         self.soc = SOC
         self.soh = SOH
@@ -29,12 +35,18 @@ class State:
         self.is_anomaly = False
         self.anomaly_score = None
 
+        # DTC Prediction data
+        self.dtc_score = None
+        self.dtc_label = False
+
 
 class DigitalTwin:
     def __init__(self):
         # load the RobustScaler and the anomaly detection model
         self.anomaly_model = joblib.load(ad_config.ANOMALY_MODEL_PATH)
         self.anomaly_scaler = joblib.load(ad_config.SCALER_PATH)
+        self.dtc_model = joblib.load(dtc_cfg.get_model_path())
+        self.dtc_scaler = joblib.load(dtc_cfg.get_scaler_path())
 
         #initialize the data storage structures
         self.current_state = None
@@ -72,6 +84,17 @@ class DigitalTwin:
                 f"Anomaly Score: {current_state.anomaly_score:.4f}"
             )
 
+        ## DTC Prediction
+        if len(self.historical_dataset) >= dtc_cfg.seq_len:
+            data = self.historical_dataset.copy()
+            data['vehicle_id'] = self.vehicle_id
+            current_state.dtc_score, current_state.dtc_label= dtc_pred.predict(
+                data,
+                self.dtc_model,
+                self.dtc_scaler,
+                seq_len=dtc_cfg.seq_len
+            )
+        
         # add current state to the historical states
         self.historical_states.append(current_state)
         self.current_state = current_state
