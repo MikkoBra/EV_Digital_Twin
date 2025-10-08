@@ -29,7 +29,7 @@ class DataHandler(QObject):
         self.receiver.new_data.connect(self.handle_new_data)
         self._threads = []
 
-    def start_run(self, playback_speed, data_window):
+    def start_run(self, playback_speed, data_window, start_datetime=None):
         # Reset digital twin data for new run
         if self.digital_twin:
             import pandas as pd
@@ -42,6 +42,12 @@ class DataHandler(QObject):
             self.digital_twin.current_state = None
         
         self.publisher.playback_rate = playback_speed
+        
+        # Set start datetime if provided
+        if start_datetime:
+            self.publisher.start_datetime = start_datetime
+        else:
+            self.publisher.start_datetime = None
 
         # Start receiver in background thread
         receiver_thread = threading.Thread(target=self.receiver.run, daemon=True)

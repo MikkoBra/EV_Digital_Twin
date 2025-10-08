@@ -12,6 +12,7 @@ class EVDataPublisher:
         self.topic = topic
         self.playback_rate = playback_rate
         self._running = False
+        self.start_datetime = None  # Optional: start from specific datetime
 
         # Initialize MQTT client
         self.client = paho.Client(client_id="EV_data_publisher", userdata=None, protocol=paho.MQTTv5)
@@ -47,13 +48,25 @@ class EVDataPublisher:
         """Read CSV and publish rows as MQTT messages."""
         df = pd.read_csv(self.csv_path)
         df.rename(columns={"Unnamed: 0": "TimeStamp"}, inplace=True)
-
+        
+        # Filter data if start_datetime is specified
+        if self.start_datetime:
+            df['TimeStamp'] = pd.to_datetime(df['TimeStamp'])
+            start_dt = pd.to_datetime(self.start_datetime)
+            df = df[df['TimeStamp'] >= start_dt]
+            print(f"📅 Starting from datetime: {start_dt}")
+            print(f"📊 Publishing {len(df)} rows")
+        
         for _, row in df.iterrows():
             if not self._running:
                 print("⏹️ Publishing stopped.")
                 break
 
             data = row.to_dict()
+            # Convert Timestamp to string if it's a datetime object
+            if isinstance(data.get('TimeStamp'), pd.Timestamp):
+                data['TimeStamp'] = data['TimeStamp'].isoformat()
+            
             payload = json.dumps(data)
 
             result = self.client.publish(self.topic, payload=payload, qos=1)

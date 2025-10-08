@@ -37,6 +37,26 @@ class Car(QWidget):
         self.stop_btn = StopButton(stop_icon_path, self.stop_run, parent=self)
         self.stop_btn.move(self.run_btn.x() + self.run_btn.width() + 10, 10)
 
+        # === DateTime Display ===
+        self.datetime_label = QLabel("----------- --:--:--", parent=self)
+        datetime_font = QFont("Segoe UI", 18, QFont.Bold)
+        self.datetime_label.setFont(datetime_font)
+        self.datetime_label.setStyleSheet("""
+            QLabel {
+                color: #2196F3;
+                background-color: rgba(255, 255, 255, 0.9);
+                padding: 10px 30px;
+                border-radius: 8px;
+                border: 2px solid #2196F3;
+            }
+        """)
+        self.datetime_label.setAlignment(Qt.AlignCenter)
+        self.datetime_label.setMinimumWidth(300)
+        # Position will be set in resizeEvent
+
+        # === Status Panel (Anomaly Detection & DTC Prediction) ===
+        self.init_status_panel()
+
         # === Hotspots ===
         self.hotspots = []
         self.init_battery()
@@ -51,6 +71,72 @@ class Car(QWidget):
         self.tacho_meter.update_position(image_rect=QRect(50, 50, 100, 100))  # adjust as needed
         self.data_handler.new_data_signal.connect(self.update_state)
 
+    def init_status_panel(self):
+        """Create status panel for anomaly detection and DTC prediction."""
+        self.status_panel = QWidget(self)
+        status_layout = QVBoxLayout(self.status_panel)
+        status_layout.setContentsMargins(8, 8, 8, 8)
+        status_layout.setSpacing(6)
+        
+        # Panel styling
+        self.status_panel.setStyleSheet("""
+            QWidget {
+                background-color: rgba(255, 255, 255, 0.95);
+                border-radius: 8px;
+                border: 2px solid #E0E0E0;
+            }
+        """)
+        
+        # Title font
+        title_font = QFont("Segoe UI", 11, QFont.Bold)
+        value_font = QFont("Segoe UI", 9)
+        
+        # === Anomaly Detection Status ===
+        anomaly_title = QLabel("Anomaly Detection")
+        anomaly_title.setFont(title_font)
+        anomaly_title.setStyleSheet("color: #333; border: none; background: transparent;")
+        anomaly_title.setAlignment(Qt.AlignCenter)
+        status_layout.addWidget(anomaly_title)
+        
+        # Anomaly status indicator (green/orange/red circle + text)
+        anomaly_container = QWidget()
+        anomaly_layout = QHBoxLayout(anomaly_container)
+        anomaly_layout.setContentsMargins(0, 0, 0, 0)
+        anomaly_container.setStyleSheet("border: none; background: transparent;")
+        
+        self.anomaly_indicator = QLabel("●")
+        self.anomaly_indicator.setFont(QFont("Segoe UI", 20))
+        self.anomaly_indicator.setStyleSheet("color: #4CAF50; border: none; background: transparent;")  # Green by default
+        anomaly_layout.addWidget(self.anomaly_indicator)
+        
+        self.anomaly_text = QLabel("Normal")
+        self.anomaly_text.setFont(value_font)
+        self.anomaly_text.setStyleSheet("color: #333; border: none; background: transparent;")
+        anomaly_layout.addWidget(self.anomaly_text)
+        anomaly_layout.addStretch()
+        
+        status_layout.addWidget(anomaly_container)
+        
+        # === DTC Prediction ===
+        dtc_title = QLabel("DTC Prediction (1h)")
+        dtc_title.setFont(title_font)
+        dtc_title.setStyleSheet("color: #333; border: none; background: transparent;")
+        dtc_title.setAlignment(Qt.AlignCenter)
+        status_layout.addWidget(dtc_title)
+        
+        # DTC prediction value
+        self.dtc_prediction_label = QLabel("No fault codes predicted")
+        self.dtc_prediction_label.setFont(value_font)
+        self.dtc_prediction_label.setStyleSheet("color: #4CAF50; border: none; background: transparent;")
+        self.dtc_prediction_label.setAlignment(Qt.AlignCenter)
+        self.dtc_prediction_label.setWordWrap(True)
+        status_layout.addWidget(self.dtc_prediction_label)
+        
+        status_layout.addStretch()
+        
+        # Position will be set in resizeEvent
+        self.status_panel.setFixedSize(220, 160)
+    
     def init_text_boxes(self):
         """Create right-side panel with parameter boxes."""
         self.param_boxes = {}
@@ -72,8 +158,8 @@ class Car(QWidget):
         self.right_layout.setContentsMargins(10, 10, 10, 10)  # panel margins
 
         # Define fonts
-        name_font = QFont("Segoe UI", 10, QFont.Bold)
-        value_font = QFont("Segoe UI", 9)
+        name_font = QFont("Segoe UI", 9, QFont.Bold)
+        value_font = QFont("Segoe UI", 8)
 
         for i, row_params in enumerate(rows):
             row_widget = QWidget()
@@ -84,7 +170,7 @@ class Car(QWidget):
                 container = QWidget()
                 container.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 v_layout = QVBoxLayout(container)
-                v_layout.setSpacing(2)          # vertical spacing within pair (fixed)
+                v_layout.setSpacing(1)          # vertical spacing within pair (fixed)
                 v_layout.setContentsMargins(0, 0, 0, 0)
 
                 # Name label
@@ -113,19 +199,46 @@ class Car(QWidget):
                 self.right_layout.addStretch(1)
     
     def update_right_container_geometry(self):
-        container_width = 300
-        x = self.width() - container_width - 20
-        y = 100
-        container_height = self.height() - y - 100  # bottom margin
+        container_width = 280
+        x = self.width() - container_width - 15
+        y = 200  # Verschuif naar beneden
+        container_height = self.height() - y - 80  # bottom margin
         self.right_container.setGeometry(x, y, container_width, container_height)
         
     def resizeEvent(self, event):
         """Update bottom container when window is resized."""
         super().resizeEvent(event)
         self.update_right_container_geometry()
+        
+        # Position datetime label in top-center
+        self.datetime_label.adjustSize()
+        datetime_x = (self.width() - self.datetime_label.width()) // 2
+        datetime_y = 10
+        self.datetime_label.move(datetime_x, datetime_y)
+        
+        # Position status panel on the RIGHT (gespiegeld)
+        # Right side: total_width - panel_width - margin
+        status_x = self.width() - 220 - 10  # 220px panel width, 10px margin
+        status_y = 10  # Same height as datetime
+        self.status_panel.move(status_x, status_y)
+        self.status_panel.raise_()  # Bring to front to ensure visibility
 
     def update_state(self, state):
         """Update all text boxes with values from the State object."""
+        # Update datetime display
+        if hasattr(state, 'timestamp') and state.timestamp:
+            from datetime import datetime
+            import pandas as pd
+            # Convert timestamp to datetime string
+            if isinstance(state.timestamp, str):
+                dt = pd.to_datetime(state.timestamp)
+            else:
+                dt = state.timestamp
+            self.datetime_label.setText(dt.strftime("%Y-%m-%d %H:%M:%S"))
+        
+        # Update status panel (placeholder for now - will be replaced with real anomaly detection)
+        self.update_status_panel(state)
+        
         # self.param_boxes["timestamp"].setText(str(state.timestamp))
         # self.param_boxes["soc"].setText(f"{state.soc:.2f}")
         # self.param_boxes["soh"].setText(f"{state.soh:.2f}")
@@ -143,6 +256,51 @@ class Car(QWidget):
         self.tacho_meter.update_rpm(state.motor_rpm)
         
         self.update()
+    
+    def update_status_panel(self, state):
+        """Update anomaly detection and DTC prediction status (placeholder)."""
+        # TODO: Replace with actual anomaly detection logic
+        # For now, simple rule-based mock status based on parameter values
+        
+        # Mock anomaly detection based on battery temp and motor temp
+        anomaly_detected = False
+        warning_level = 0  # 0 = normal (green), 1 = warning (orange), 2 = critical (red)
+        
+        if hasattr(state, 'battery_temp') and state.battery_temp > 50:
+            anomaly_detected = True
+            warning_level = 1
+        if hasattr(state, 'motor_temp') and state.motor_temp > 90:
+            anomaly_detected = True
+            warning_level = 2
+        if hasattr(state, 'brake_pad_wear') and state.brake_pad_wear < 2.0:
+            anomaly_detected = True
+            warning_level = max(warning_level, 1)
+        
+        # Update indicator color and text
+        if warning_level == 0:
+            self.anomaly_indicator.setStyleSheet("color: #4CAF50; border: none; background: transparent;")  # Green
+            self.anomaly_text.setText("Normal")
+            self.anomaly_text.setStyleSheet("color: #4CAF50; border: none; background: transparent;")
+        elif warning_level == 1:
+            self.anomaly_indicator.setStyleSheet("color: #FF9800; border: none; background: transparent;")  # Orange
+            self.anomaly_text.setText("Warning")
+            self.anomaly_text.setStyleSheet("color: #FF9800; border: none; background: transparent;")
+        else:
+            self.anomaly_indicator.setStyleSheet("color: #F44336; border: none; background: transparent;")  # Red
+            self.anomaly_text.setText("Critical")
+            self.anomaly_text.setStyleSheet("color: #F44336; border: none; background: transparent;")
+        
+        # Mock DTC prediction based on current DTC and trends
+        # TODO: Replace with actual prediction model
+        if hasattr(state, 'dtc') and state.dtc != 0:
+            self.dtc_prediction_label.setText(f"Fault code {state.dtc} may persist")
+            self.dtc_prediction_label.setStyleSheet("color: #FF9800; border: none; background: transparent;")
+        elif anomaly_detected:
+            self.dtc_prediction_label.setText("Potential fault code predicted")
+            self.dtc_prediction_label.setStyleSheet("color: #FF9800; border: none; background: transparent;")
+        else:
+            self.dtc_prediction_label.setText("No fault codes predicted")
+            self.dtc_prediction_label.setStyleSheet("color: #4CAF50; border: none; background: transparent;")
 
     def init_battery(self):
         battery = QRect(380, 210, 177, 187)
@@ -268,10 +426,11 @@ class Car(QWidget):
         popup.start_run.connect(self.run_data)  # connect the signal
         popup.exec()
 
-    def run_data(self, playback_speed, data_window):
+    def run_data(self, playback_speed, data_window, start_datetime=None):
         print(f"Playback Speed: {playback_speed}")
         print(f"Data Window: {data_window}")
-        self.data_handler.start_run(playback_speed, data_window)
+        print(f"Start DateTime: {start_datetime}")
+        self.data_handler.start_run(playback_speed, data_window, start_datetime)
     
     def stop_run(self):
         self.data_handler.stop_run()
