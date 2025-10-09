@@ -1,14 +1,14 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QSizePolicy, QScrollArea, QTextEdit, QFrame
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPixmap, QPainter, QColor, QFont
 from pathlib import Path
 from components.hotspot import Hotspot
-from pages.popups.popup import PopupPage
 from pages.popups.run_settings import RunSettings
 from pages.popups.plot_popup import BatteryPopup, MotorPopup, WheelPopup
 from services.data_handler import DataHandler
 from components.buttons import BackButton, RunButton, StopButton, PauseButton
-from components.meters import BatteryMeter, TachoMeter
+from components.meters import BatteryMeter, TachoMeter, CycleMeter, DTCMeter
+import pandas as pd
 
 
 class Car(QWidget):
@@ -16,10 +16,11 @@ class Car(QWidget):
         super().__init__()
         self.digital_twin = digital_twin
         self.data_handler = DataHandler(digital_twin=digital_twin)
+        self.last_dtc_code = 0
 
         image_path = Path(__file__).resolve().parent.parent / "assets" / "car.jpg"
         self.bg_pixmap = QPixmap(str(image_path))
-        self.scale_factor = 0.6
+        self.scale_factor = 0.65
         self.bg_x_offset = 50
 
         # === Back Button (Blue) ===
@@ -70,11 +71,7 @@ class Car(QWidget):
         self.init_motor()
 
         # === State Indicators ===
-        self.init_text_boxes()
-        self.battery_meter = BatteryMeter(parent=self)
-        self.battery_meter.update_charge(100)
-        self.tacho_meter = TachoMeter(parent=self)
-        self.tacho_meter.update_position(image_rect=QRect(50, 50, 100, 100))  # adjust as needed
+        self.init_meters_panel()
         self.data_handler.new_data_signal.connect(self.update_state)
 
     def init_status_panel(self):
@@ -130,76 +127,93 @@ class Car(QWidget):
         # Position will be set in resizeEvent
         self.status_panel.setFixedSize(220, 130)
     
-    def init_text_boxes(self):
-        """Create right-side panel with parameter boxes."""
-        self.param_boxes = {}
-        self.param_containers = {}
-
-        param_names = [
-            "charging_cycles",
-            "battery_temp", "motor_rpm", "motor_torque",
-            "motor_temp", "brake_pad_wear", "charging_voltage",
-            "tire_pressure", "dtc"
-        ]
-
-        # Split into rows with at most 2 entries each
-        rows = [param_names[i:i+2] for i in range(0, len(param_names), 2)]
-
-        # Right-side container
+    def init_meters_panel(self):
+        """Create right-side panel and arrange meters in rows of up to 2."""
         self.right_container = QWidget(self)
-        self.right_layout = QVBoxLayout(self.right_container)
-        self.right_layout.setContentsMargins(10, 10, 10, 10)  # panel margins
+        main_layout = QVBoxLayout(self.right_container)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(20)
+        self.battery_meter = BatteryMeter(parent=self.right_container)
+        self.tacho_meter = TachoMeter(parent=self.right_container)
+        self.cycle_meter = CycleMeter(parent=self.right_container)
+        self.dtc_meter = DTCMeter(parent=self.right_container)
 
-        # Define fonts
-        name_font = QFont("Segoe UI", 9, QFont.Bold)
-        value_font = QFont("Segoe UI", 8)
+        # Create meters
+        meters = [
+            self.battery_meter,
+            self.cycle_meter,
+            self.tacho_meter,
+            self.dtc_meter
+        ]
+        meters[0].update_charge(100)
 
-        for i, row_params in enumerate(rows):
-            row_widget = QWidget()
-            row_layout = QHBoxLayout(row_widget)
-            row_layout.setContentsMargins(0, 0, 0, 0)
+        # Arrange meters in rows of 2
+        row_layout = None
+        for i, meter in enumerate(meters):
+            if i % 2 == 0:
+                # Start a new row
+                row_layout = QHBoxLayout()
+                row_layout.setSpacing(10)
+                main_layout.addLayout(row_layout)
 
-            for name in row_params:
-                container = QWidget()
-                container.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-                v_layout = QVBoxLayout(container)
-                v_layout.setSpacing(1)          # vertical spacing within pair (fixed)
-                v_layout.setContentsMargins(0, 0, 0, 0)
+                # Add left stretch before first widget
+                row_layout.addStretch(1)
 
-                # Name label
-                label_name = QLabel(name.replace("_", " ").title() + ":")
-                label_name.setAlignment(Qt.AlignCenter)
-                label_name.setFont(name_font)
-                label_name.setStyleSheet("color: #333;")  # dark gray instead of black
+            # Add the meter
+            row_layout.addWidget(meter, alignment=Qt.AlignCenter)
 
-                # Value label
-                value_label = QLabel("-")
-                value_label.setAlignment(Qt.AlignCenter)
-                value_label.setFont(value_font)
-                value_label.setStyleSheet("color: #000;")  # pure black
+            # If it's the second widget in the row OR last in list
+            # → Add right stretch to balance the row
+            if i % 2 == 1 or i == len(meters) - 1:
+                row_layout.addStretch(1)
 
-                v_layout.addWidget(label_name)
-                v_layout.addWidget(value_label)
+        # --- DTC History below ---
+        self.dtc_history_frame = QFrame(self)
+        self.dtc_history_frame.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.95);
+                border: 1px solid #CCC;
+                border-radius: 8px;
+            }
+        """)
+        dtc_layout = QVBoxLayout(self.dtc_history_frame)
+        dtc_layout.setContentsMargins(10, 10, 10, 10)
 
-                row_layout.addWidget(container)
-                self.param_boxes[name] = value_label
-                self.param_containers[name] = container
+        dtc_label = QLabel("DTC History")
+        dtc_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
+        dtc_label.setAlignment(Qt.AlignCenter)
+        dtc_label.setStyleSheet("color: #333; margin-bottom: 6px;")
+        dtc_layout.addWidget(dtc_label)
 
-            self.right_layout.addWidget(row_widget)
+        self.dtc_history_box = QTextEdit()
+        self.dtc_history_box.setReadOnly(True)
+        self.dtc_history_box.setStyleSheet("""
+            QTextEdit {
+                background-color: rgba(255, 255, 255, 0.9);
+                border: none;
+                padding: 6px;
+                color: #000;
+                font-family: 'Segoe UI';
+                font-size: 9pt;
+            }
+        """)
+        dtc_layout.addWidget(self.dtc_history_box)
 
-            # Add stretch **after each row except the last** to allow dynamic spacing
-            if i < len(rows) - 1:
-                self.right_layout.addStretch(1)
     
     def update_right_container_geometry(self):
-        container_width = 280
+        """Keep right-side layout logic identical."""
+        container_width = 230
         x = self.width() - container_width - 15
-        y = 200  # Verschuif naar beneden
-        container_height = self.height() - y - 80  # bottom margin
+        y = 200 # Top margin
+        container_height = self.height() - y - 220 # Bottom margin
         self.right_container.setGeometry(x, y, container_width, container_height)
+
+        history_y = y + container_height + 40
+        history_height = 140
+        self.dtc_history_frame.setGeometry(x, history_y, container_width, history_height)
         
     def resizeEvent(self, event):
-        """Update bottom container when window is resized."""
+        """Ensure meters reposition with window resize."""
         super().resizeEvent(event)
         self.update_right_container_geometry()
         
@@ -220,8 +234,6 @@ class Car(QWidget):
         """Update all text boxes with values from the State object."""
         # Update datetime display
         if hasattr(state, 'timestamp') and state.timestamp:
-            from datetime import datetime
-            import pandas as pd
             # Convert timestamp to datetime string
             if isinstance(state.timestamp, str):
                 dt = pd.to_datetime(state.timestamp)
@@ -235,18 +247,39 @@ class Car(QWidget):
         # self.param_boxes["timestamp"].setText(str(state.timestamp))
         # self.param_boxes["soc"].setText(f"{state.soc:.2f}")
         # self.param_boxes["soh"].setText(f"{state.soh:.2f}")
-        self.param_boxes["charging_cycles"].setText(str(state.charging_cycles))  # integer
-        self.param_boxes["battery_temp"].setText(f"{state.battery_temp:.2f}")
-        self.param_boxes["motor_rpm"].setText(f"{state.motor_rpm:.2f}")
-        self.param_boxes["motor_torque"].setText(f"{state.motor_torque:.2f}")
-        self.param_boxes["motor_temp"].setText(f"{state.motor_temp:.2f}")
-        self.param_boxes["brake_pad_wear"].setText(f"{state.brake_pad_wear:.2f}")
-        self.param_boxes["charging_voltage"].setText(f"{state.charging_voltage:.2f}")
-        self.param_boxes["tire_pressure"].setText(f"{state.tire_pressure:.2f}")
-        self.param_boxes["dtc"].setText(str(state.dtc))
+        # self.param_boxes["charging_cycles"].setText(str(state.charging_cycles))  # integer
+        # self.param_boxes["battery_temp"].setText(f"{state.battery_temp:.2f}")
+        # self.param_boxes["motor_rpm"].setText(f"{state.motor_rpm:.2f}")
+        # self.param_boxes["motor_torque"].setText(f"{state.motor_torque:.2f}")
+        # self.param_boxes["motor_temp"].setText(f"{state.motor_temp:.2f}")
+        # self.param_boxes["brake_pad_wear"].setText(f"{state.brake_pad_wear:.2f}")
+        # self.param_boxes["charging_voltage"].setText(f"{state.charging_voltage:.2f}")
+        # self.param_boxes["tire_pressure"].setText(f"{state.tire_pressure:.2f}")
+        # === Handle DTC Change and Log History ===
+        current_dtc = getattr(state, "dtc", '0')
+        timestamp = getattr(state, "timestamp", None)
+
+        # Detect change from 0 → something non-zero
+        if self.last_dtc_code == '0' and current_dtc != '0':
+            if timestamp:
+                if isinstance(timestamp, str):
+                    dt = pd.to_datetime(timestamp)
+                else:
+                    dt = timestamp
+                timestamp_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                timestamp_str = "(no timestamp)"
+            
+            log_entry = f"[{timestamp_str}]  DTC Code Detected: {current_dtc}\n"
+            self.dtc_history_box.append(log_entry)
+
+        # Update tracking: when it returns to 0, arm for next event
+        self.last_dtc_code = current_dtc
 
         self.battery_meter.update_charge(state.soc)
         self.tacho_meter.update_rpm(state.motor_rpm)
+        self.cycle_meter.update_cycles(state.charging_cycles)
+        self.dtc_meter.update_dtc(state.dtc)
         
         self.update()
     
@@ -378,15 +411,15 @@ class Car(QWidget):
 
             image_rect = QRect(x, y, scaled_pix.width(), scaled_pix.height())
 
-            # === Position BatteryMeter ===
-            self.battery_meter.update_position(image_rect)
+            # # === Position BatteryMeter ===
+            # self.battery_meter.update_position(image_rect)
 
-            # === Position TachoMeter to the right of BatteryMeter ===
-            battery_rect = self.battery_meter.geometry()
-            spacing = 10  # pixels between battery and tachometer
-            tacho_x = battery_rect.right() + spacing
-            tacho_y = battery_rect.top() + (battery_rect.height() - self.tacho_meter.height()) // 2
-            self.tacho_meter.move(tacho_x, tacho_y)
+            # # === Position TachoMeter to the right of BatteryMeter ===
+            # battery_rect = self.battery_meter.geometry()
+            # spacing = 10  # pixels between battery and tachometer
+            # tacho_x = battery_rect.right() + spacing
+            # tacho_y = battery_rect.top() + (battery_rect.height() - self.tacho_meter.height()) // 2
+            # self.tacho_meter.move(tacho_x, tacho_y)
 
             # Update hotspots
             for box in self.hotspots:
