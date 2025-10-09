@@ -66,6 +66,18 @@ class Car(QWidget):
 
         # === Hotspots ===
         self.hotspots = []
+        self.info_box = QLabel("", self)
+        self.info_box.setStyleSheet("""
+            QLabel {
+                background-color: rgba(0, 0, 0, 0.75);
+                color: white;
+                padding: 8px;
+                border-radius: 5px;
+                font-size: 10pt;
+            }
+        """)
+        self.info_box.setWordWrap(True)
+        self.info_box.hide()
         self.init_battery()
         self.init_wheels()
         self.init_motor()
@@ -233,6 +245,7 @@ class Car(QWidget):
     def update_state(self, state):
         """Update all text boxes with values from the State object."""
         # Update datetime display
+        self.current_state = state
         if hasattr(state, 'timestamp') and state.timestamp:
             # Convert timestamp to datetime string
             if isinstance(state.timestamp, str):
@@ -351,27 +364,33 @@ class Car(QWidget):
             padding=60
         )
         battery_hotspot.clicked.connect(self.show_battery_popup)
+        battery_hotspot.enterEvent = lambda event, hs=battery_hotspot: self.show_info(hs, "battery")
+        battery_hotspot.leaveEvent = lambda event: self.info_box.hide()
         self.hotspots.append(battery_hotspot)
 
     def init_wheels(self):
         r_f_wheel_rect = QRect(139, 265, 122, 140)
         r_f_wheel_hotspot = Hotspot(self, r_f_wheel_rect, rotation=30, shape="circle", group="wheels")
         r_f_wheel_hotspot.clicked.connect(self.show_wheel_popup)
-        self.hotspots.append(r_f_wheel_hotspot)
 
         l_f_wheel_rect = QRect(358, 352, 122, 162)
         l_f_wheel_hotspot = Hotspot(self, l_f_wheel_rect, rotation=30, shape="circle", group="wheels")
         l_f_wheel_hotspot.clicked.connect(self.show_wheel_popup)
-        self.hotspots.append(l_f_wheel_hotspot)
 
         r_b_wheel_rect = QRect(685, 190, 95, 140)
         r_b_wheel_hotspot = Hotspot(self, r_b_wheel_rect, rotation=28, shape="circle", group="wheels")
         r_b_wheel_hotspot.clicked.connect(self.show_wheel_popup)
-        self.hotspots.append(r_b_wheel_hotspot)
 
         l_b_wheel_rect = QRect(477, 120, 92, 117)
         l_b_wheel_hotspot = Hotspot(self, l_b_wheel_rect, rotation=30, shape="circle", group="wheels")
         l_b_wheel_hotspot.clicked.connect(self.show_wheel_popup)
+
+        for wheel in [r_f_wheel_hotspot, l_f_wheel_hotspot, r_b_wheel_hotspot, l_b_wheel_hotspot]:
+            wheel.enterEvent = lambda event, hs=wheel: self.show_info(hs, "wheel")
+            wheel.leaveEvent = lambda event: self.info_box.hide()
+        self.hotspots.append(r_f_wheel_hotspot)
+        self.hotspots.append(l_f_wheel_hotspot)
+        self.hotspots.append(r_b_wheel_hotspot)
         self.hotspots.append(l_b_wheel_hotspot)
     
     def init_motor(self):
@@ -380,13 +399,48 @@ class Car(QWidget):
         front_motor_rect = QRect(240, 280, 140, 100)
         front_motor_hotspot = Hotspot(self, front_motor_rect, rotation=30, shape="square", padding=20, group="motors")
         front_motor_hotspot.clicked.connect(self.show_motor_popup)
-        self.hotspots.append(front_motor_hotspot)
         
         # Rear motor (battery area, slightly behind center)
         rear_motor_rect = QRect(550, 180, 120, 90)
         rear_motor_hotspot = Hotspot(self, rear_motor_rect, rotation=28, shape="square", padding=20, group="motors")
         rear_motor_hotspot.clicked.connect(self.show_motor_popup)
+
+        for motor in [front_motor_hotspot, rear_motor_hotspot]:
+            motor.enterEvent = lambda event, hs=motor: self.show_info(hs, "motor")
+            motor.leaveEvent = lambda event: self.info_box.hide()
+        self.hotspots.append(front_motor_hotspot)
         self.hotspots.append(rear_motor_hotspot)
+    
+    def show_info(self, hotspot, hotspot_type):
+        """Display relevant state data in info box when hovering over a hotspot."""
+        state = getattr(self, "current_state", None)
+        if not state:
+            return
+
+        if hotspot_type == "battery":
+            text = f"SOH: {getattr(state, 'soh', 'N/A')}\n" \
+                f"Temp: {getattr(state, 'battery_temp', 'N/A')} °C\n" \
+                f"Voltage: {getattr(state, 'charging_voltage', 'N/A')} V"
+        elif hotspot_type == "wheel":
+            text = f"Brake Pad Wear: {getattr(state, 'brake_pad_wear', 'N/A')}\n" \
+                f"Tire Pressure: {getattr(state, 'tire_pressure', 'N/A')} psi"
+        elif hotspot_type == "motor":
+            text = f"Torque: {getattr(state, 'motor_torque', 'N/A')} Nm\n" \
+                f"Temp: {getattr(state, 'motor_temp', 'N/A')} °C"
+        else:
+            text = ""
+
+        self.info_box.setText(text)
+        self.info_box.adjustSize()
+
+        # Position the info box above the hotspot
+        hotspot_geom = hotspot.geometry()
+        info_x = hotspot_geom.center().x() - self.info_box.width() // 2
+        info_y = hotspot_geom.top() - self.info_box.height() - 5
+        self.info_box.move(info_x, info_y)
+        self.info_box.show()
+
+
 
     def paintEvent(self, event):
         painter = QPainter(self)
