@@ -23,7 +23,7 @@ class Meter(QWidget):
             pixmap = QPixmap(str(icon_path))
             self.icon_label.setPixmap(pixmap)
             self.icon_label.setScaledContents(True)
-            self.icon_label.setFixedSize(50, 50)
+            self.icon_label.setFixedSize(60, 60)
             self.icon_label.setStyleSheet("background: transparent;")
             self.layout.addWidget(self.icon_label, alignment=Qt.AlignCenter)
 
@@ -73,17 +73,17 @@ class BatteryMeter(Meter):
 
 
 class TachoMeter(Meter):
-    """Circular RPM gauge with needle and digital readout to the right."""
+    """Circular RPM gauge with needle and digital readout below it."""
 
     def __init__(self, max_rpm=7000, parent=None):
         super().__init__(icon_path=None, parent=parent)
         self.rpm = 0.0
         self.max_rpm = max_rpm
-        self.gauge_radius = 20
+        self.gauge_radius = 25
         self.font = QFont("Segoe UI", 10, QFont.Bold)
-        # Increase width to accommodate text on the right
-        self.setFixedSize(self.gauge_radius * 2 + 80, self.gauge_radius * 2 + 20)
-        # Hide layout text label since we will draw text manually
+        # Increase height to fit label underneath
+        self.setFixedSize(self.gauge_radius * 2 + 20, self.gauge_radius * 2 + 40)
+        # Hide inherited layout text label
         self.text_label.hide()
 
     def update_rpm(self, rpm: float):
@@ -95,11 +95,11 @@ class TachoMeter(Meter):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Center of gauge
-        center = QPointF(self.gauge_radius + 10, self.height() / 2)
+        # Center the gauge horizontally, leave space below for text
+        center = QPointF(self.width() / 2, self.gauge_radius + 10)
         radius = self.gauge_radius
 
-        # Draw outer circle
+        # --- Draw outer circle ---
         outer_pen = painter.pen()
         outer_pen.setWidth(4)
         outer_pen.setColor(QColor("#444"))
@@ -107,7 +107,7 @@ class TachoMeter(Meter):
         painter.setBrush(QColor("#f0f0f0"))
         painter.drawEllipse(center, radius, radius)
 
-        # Draw tick marks
+        # --- Draw tick marks ---
         tick_pen = painter.pen()
         tick_pen.setWidth(2)
         tick_pen.setColor(QColor("#222"))
@@ -121,7 +121,7 @@ class TachoMeter(Meter):
             y2 = center.y() - radius * math.sin(rad)
             painter.drawLine(int(x1), int(y1), int(x2), int(y2))
 
-        # Draw needle
+        # --- Draw needle ---
         needle_pen = painter.pen()
         needle_pen.setWidth(4)
         needle_pen.setColor(QColor("red"))
@@ -135,9 +135,46 @@ class TachoMeter(Meter):
         needle_y = center.y() - radius * 0.9 * math.sin(rad)
         painter.drawLine(center.x(), center.y(), int(needle_x), int(needle_y))
 
-        # Draw RPM text to the right
+        # --- Draw RPM text BELOW the gauge ---
         painter.setFont(self.font)
         painter.setPen(QColor("#000"))
-        text_x = center.x() + radius + 10
-        text_rect = QRect(int(text_x), 0, self.width() - int(text_x), self.height())
-        painter.drawText(text_rect, Qt.AlignVCenter | Qt.AlignLeft, f"{int(self.rpm)} RPM")
+        text_rect = QRect(0, int(center.y() + radius + 5), self.width(), 25)
+        painter.drawText(text_rect, Qt.AlignCenter, f"{int(self.rpm)} RPM")
+
+
+class CycleMeter(Meter):
+    """Charging cycle meter showing number of charging cycles with static icon."""
+
+    def __init__(self, parent=None):
+        base_path = Path(__file__).resolve().parent.parent / "assets"
+        icon_path = base_path / "cycle.png"
+        super().__init__(icon_path, parent)
+        self.base_path = base_path
+        self.cycles = 0
+        self.update_cycles(self.cycles)
+
+    def update_cycles(self, cycles: int):
+        """Update the number of cycles and display."""
+        self.cycles = cycles
+        self.text_label.setText(f"{cycles} Charges")
+
+class DTCMeter(Meter):
+    """DTC meter showing the current Diagnostic Trouble Code with a warning icon."""
+
+    def __init__(self, parent=None):
+        base_path = Path(__file__).resolve().parent.parent / "assets"
+        icon_path = base_path / "warning.png"
+        super().__init__(icon_path, parent)
+        self.base_path = base_path
+        self.dtc = "0"
+        self.update_dtc(self.dtc)
+
+    def update_dtc(self, dtc):
+        """Update the DTC code shown on the label."""
+        self.dtc = dtc
+        if str(dtc) == "0" or dtc in [None, "", "None"]:
+            self.text_label.setText("None")
+            self.text_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
+        else:
+            self.text_label.setText(f"Code: {dtc}")
+            self.text_label.setStyleSheet("color: #F44336; font-weight: bold;")

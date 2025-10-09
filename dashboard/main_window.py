@@ -16,8 +16,9 @@ class MainWindow(QMainWindow):
         # Initialize Digital Twin for historical data
         self.digital_twin = DigitalTwin()
 
-        self.base_width = 930
-        self.base_height = 550
+        scale = 1.2
+        self.base_width = 930 * scale
+        self.base_height = 550  * scale
         self.aspect_ratio = self.base_width / self.base_height
 
         self.resize(self.base_width, self.base_height)
