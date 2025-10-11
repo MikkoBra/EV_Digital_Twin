@@ -1,0 +1,12 @@
+{
+  "best_params": {
+    "hidden": 96,
+    "dropout": 0.23463850816208787,
+    "bidirectional": false,
+    "batch_size": 128,
+    "epochs": 42,
+    "lr": 0.0005941572735994314
+  },
+  "chosen_threshold": 0.7923927307128906,
+  "study_best_value": 0.253333333333091
+}
