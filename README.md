@@ -9,20 +9,22 @@ Authors: Jasper Abbes, Mikko Brandon, Yonatan Getachew, Koen Verlaan
 
 ## Project Structure
 
+```text
 .
 ├── Publish_Data.py              # Publishes EV data to HiveMQ Cloud at a specified rate
 ├── Receive_Data.py              # Receives and processes data from HiveMQ Cloud
 ├── System_State.py              # Implements the Digital Twin and ML prediction functions
 │
-├── /models                      # Error code prediction models and outputs
-├── /dtc_prediction              # LSTM time-series model and preprocessing for DTC prediction
-├── /anomaly detection           # ML model and preprocessing for anomaly detection
-├── /data                        # Contains CSV datasets for 4 EV usage types
-└── /dashboard                   # GUI implementation of the digital twin
-    ├── assets
-    ├── components
-    ├── pages
-    └── services
+├── models/                      # Error code prediction models and outputs
+├── dtc_prediction/              # LSTM time-series model and preprocessing for DTC prediction
+├── anomaly_detection/           # ML model and preprocessing for anomaly detection
+├── data/                        # Contains CSV datasets for 4 EV usage types
+└── dashboard/                   # GUI implementation of the digital twin
+    ├── assets/
+    ├── components/
+    ├── pages/
+    └── services/
+```
 
 ---
 
