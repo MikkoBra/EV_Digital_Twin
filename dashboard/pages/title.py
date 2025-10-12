@@ -4,13 +4,16 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 class Title(QWidget):
+    """
+    Title page of the GUI.
+    """
     def __init__(self, go_next_callback):
         super().__init__()
 
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
 
-        label = QLabel("Electric Vehicle Digital Twin\nTeam O")
+        label = QLabel("Electric Vehicle Digital Twin\nTeam O\nJasper Abbes, Mikko Brandon, Yonatan Getachew, Koen Verlaan\n\n\n")
         label.setAlignment(Qt.AlignCenter)
         label_font = QFont("Segoe UI", 14)
         label.setFont(label_font)

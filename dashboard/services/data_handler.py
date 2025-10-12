@@ -7,10 +7,16 @@ from Publish_Data import EVDataPublisher
 from Receive_Data import EVDataReceiver
 
 class DataHandler(QObject):
-    # Signal for all EV parameters
+    """
+    Facilitates communication between the model and the dashboard.
+    """
     new_data_signal = Signal(object)
 
     def __init__(self, digital_twin=None):
+        """
+        Connects the event reception signal from the data receiver to a function
+        that handles this reception.
+        """
         super().__init__()
         self.digital_twin = digital_twin
         self.publisher = EVDataPublisher(csv_path="data/heavy_user.csv")
@@ -20,7 +26,10 @@ class DataHandler(QObject):
         self.is_paused = False
 
     def start_run(self, playback_speed, data_window, start_datetime=None):
-        # Reset digital twin data for new run
+        """
+        Starts replay of sensor data by activating the EVDataPublisher with a
+        specified playback speed and activating the EVDataReceiver.
+        """
         if self.digital_twin:
             import pandas as pd
             self.digital_twin.historical_dataset = pd.DataFrame(columns=[
@@ -50,8 +59,11 @@ class DataHandler(QObject):
         self._threads = [receiver_thread, publisher_thread]
 
     def handle_new_data(self, current_state):
-        """Thread-safe emission of all signals to GUI thread"""
-        # Update digital twin with new state
+        """
+        Updates the internal representation of the digital twin with the new sensor
+        data, fetches output from the ML algorithms based on this data, and emits
+        the resulting system state as a signal to the user interface.
+        """
         if self.digital_twin:
             sensor_data = {
                 'TimeStamp': current_state.timestamp,
@@ -72,19 +84,25 @@ class DataHandler(QObject):
         self.new_data_signal.emit(current_state)
 
     def pause_run(self):
-        """Pause the simulation by pausing the publisher."""
+        """
+        Pauses the data replay by pausing the publisher.
+        """
         self.is_paused = True
         self.publisher.pause()
         print("DataHandler: Simulation paused")
     
     def resume_run(self):
-        """Resume the simulation by resuming the publisher."""
+        """
+        Continues the data replay by resuming the publisher.
+        """
         self.is_paused = False
         self.publisher.resume()
         print("DataHandler: Simulation resumed")
 
     def stop_run(self):
-        """Stop publisher and receiver threads cleanly"""
+        """
+        Stops publisher and receiver threads.
+        """
         self.is_paused = False
         self.publisher.stop()
         self.receiver.stop()

@@ -6,7 +6,9 @@ import math
 
 
 class Meter(QWidget):
-    """Base class for fixed-position visual meters (icon + optional text)."""
+    """
+    General class for fixed-position meters (icon + optional text).
+    """
 
     def __init__(self, icon_path: Path = None, parent=None):
         super().__init__(parent)
@@ -34,16 +36,23 @@ class Meter(QWidget):
         self.layout.addWidget(self.text_label, alignment=Qt.AlignCenter)
 
     def update_position(self, image_rect: QRect, offset_x=0, offset_y=0):
-        """Align meter relative to background image."""
+        """
+        Aligns meter relative to background image.
+        """
         x = image_rect.x() + offset_x
         y = image_rect.y() + offset_y
         self.move(x, y)
 
 
 class BatteryMeter(Meter):
-    """Battery meter with SOC icon and text."""
+    """
+    Battery meter with SOC icon and text.
+    """
 
     def __init__(self, parent=None):
+        """
+        Fetches battery SOC icons from assets and sets initial charge to 100.
+        """
         base_path = Path(__file__).resolve().parent.parent / "assets"
         icon_path = base_path / "full-battery.png"
         super().__init__(icon_path, parent)
@@ -52,6 +61,10 @@ class BatteryMeter(Meter):
         self.update_charge(self.charge)
 
     def update_charge(self, charge: float):
+        """
+        Determine which icon should be displayed depending on the current
+        SOC value.
+        """
         self.charge = charge
 
         if charge > 90:
@@ -72,26 +85,34 @@ class BatteryMeter(Meter):
         self.text_label.setText(f"{charge:.0f}%")
 
 
+
 class TachoMeter(Meter):
     """Circular RPM gauge with needle and digital readout below it."""
 
-    def __init__(self, max_rpm=7000, parent=None):
+    def __init__(self, max_rpm=7000, parent=None, gauge_radius=25):
+        """
+        Tachometer size is determined by gauge_radius. Increase to make
+        the meter bigger.
+        """
         super().__init__(icon_path=None, parent=parent)
         self.rpm = 0.0
         self.max_rpm = max_rpm
-        self.gauge_radius = 25
+        self.gauge_radius = gauge_radius
         self.font = QFont("Segoe UI", 10, QFont.Bold)
-        # Increase height to fit label underneath
         self.setFixedSize(self.gauge_radius * 2 + 20, self.gauge_radius * 2 + 40)
-        # Hide inherited layout text label
         self.text_label.hide()
 
     def update_rpm(self, rpm: float):
-        """Update the RPM value and trigger repaint."""
+        """
+        Updates the RPM value and triggers repaint.
+        """
         self.rpm = rpm
         self.update()
 
     def paintEvent(self, event):
+        """
+        Determines what should happen when the meter is painted.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
@@ -99,7 +120,7 @@ class TachoMeter(Meter):
         center = QPointF(self.width() / 2, self.gauge_radius + 10)
         radius = self.gauge_radius
 
-        # --- Draw outer circle ---
+        # Draw outer circle
         outer_pen = painter.pen()
         outer_pen.setWidth(4)
         outer_pen.setColor(QColor("#444"))
@@ -107,7 +128,7 @@ class TachoMeter(Meter):
         painter.setBrush(QColor("#f0f0f0"))
         painter.drawEllipse(center, radius, radius)
 
-        # --- Draw tick marks ---
+        # Draw tick marks
         tick_pen = painter.pen()
         tick_pen.setWidth(2)
         tick_pen.setColor(QColor("#222"))
@@ -121,7 +142,7 @@ class TachoMeter(Meter):
             y2 = center.y() - radius * math.sin(rad)
             painter.drawLine(int(x1), int(y1), int(x2), int(y2))
 
-        # --- Draw needle ---
+        # Draw needle
         needle_pen = painter.pen()
         needle_pen.setWidth(4)
         needle_pen.setColor(QColor("red"))
@@ -135,7 +156,7 @@ class TachoMeter(Meter):
         needle_y = center.y() - radius * 0.9 * math.sin(rad)
         painter.drawLine(center.x(), center.y(), int(needle_x), int(needle_y))
 
-        # --- Draw RPM text BELOW the gauge ---
+        # Draw RPM text below the gauge
         painter.setFont(self.font)
         painter.setPen(QColor("#000"))
         text_rect = QRect(0, int(center.y() + radius + 5), self.width(), 25)
@@ -143,9 +164,14 @@ class TachoMeter(Meter):
 
 
 class CycleMeter(Meter):
-    """Charging cycle meter showing number of charging cycles with static icon."""
+    """
+    Charging cycle meter showing number of charging cycles.
+    """
 
     def __init__(self, parent=None):
+        """
+        Fetches charging cycle icon from assets and sets initial cycles to 0.
+        """
         base_path = Path(__file__).resolve().parent.parent / "assets"
         icon_path = base_path / "cycle.png"
         super().__init__(icon_path, parent)
@@ -154,14 +180,21 @@ class CycleMeter(Meter):
         self.update_cycles(self.cycles)
 
     def update_cycles(self, cycles: int):
-        """Update the number of cycles and display."""
+        """
+        Updates the number of cycles and display.
+        """
         self.cycles = cycles
         self.text_label.setText(f"{cycles} Charges")
 
 class DTCMeter(Meter):
-    """DTC meter showing the current Diagnostic Trouble Code with a warning icon."""
+    """
+    DTC meter showing the current error code with a warning icon.
+    """
 
     def __init__(self, parent=None):
+        """
+        Fetches warning icon from assets and sets initial DTC code to 0.
+        """
         base_path = Path(__file__).resolve().parent.parent / "assets"
         icon_path = base_path / "warning.png"
         super().__init__(icon_path, parent)
@@ -170,7 +203,9 @@ class DTCMeter(Meter):
         self.update_dtc(self.dtc)
 
     def update_dtc(self, dtc):
-        """Update the DTC code shown on the label."""
+        """
+        Updates the DTC code shown on the label.
+        """
         self.dtc = dtc
         if str(dtc) == "0" or dtc in [None, "", "None"]:
             self.text_label.setText("None")

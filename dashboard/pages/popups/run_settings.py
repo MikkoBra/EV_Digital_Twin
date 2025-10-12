@@ -6,10 +6,17 @@ from PySide6.QtCore import Qt, Signal, QDateTime
 
 
 class RunSettings(QDialog):
-    """Popup for run configuration: playback speed, data window, and start datetime."""
-    start_run = Signal(float, int, str)  # emits seconds per message, data window, and start datetime (ISO string or None)
+    """
+    Popup for run configuration: playback speed, data window, and start datetime.
+    """
+    start_run = Signal(float, int, str)
 
     def __init__(self, title="Run Settings", parent=None):
+        """
+        Initializes a replay speed slider, an input field for window size
+        of data history, and a datetime selector for the start date of the
+        simulation.
+        """
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setModal(True)
@@ -21,12 +28,12 @@ class RunSettings(QDialog):
 
         # === Playback speed ===
         speed_label = QLabel("Playback Speed (messages per second):", self)
-        self.speed_value_label = QLabel("1", self)  # default msg/sec
+        self.speed_value_label = QLabel("1", self)
         self.speed_value_label.setAlignment(Qt.AlignCenter)
 
         self.speed_slider = QSlider(Qt.Horizontal, self)
-        self.speed_slider.setMinimum(1)      # 1 msg/sec
-        self.speed_slider.setMaximum(10)     # 10 msg/sec
+        self.speed_slider.setMinimum(1)
+        self.speed_slider.setMaximum(10)
         self.speed_slider.setValue(1)
         self.speed_slider.setTickInterval(1)
         self.speed_slider.setTickPosition(QSlider.TicksBelow)
@@ -53,12 +60,10 @@ class RunSettings(QDialog):
         self.datetime_picker = QDateTimeEdit(self)
         self.datetime_picker.setCalendarPopup(True)
         self.datetime_picker.setDisplayFormat("yyyy-MM-dd HH:00:00")
-        # Set default to 2020-01-01 00:00:00
         default_datetime = QDateTime(2020, 1, 1, 0, 0, 0)
         self.datetime_picker.setDateTime(default_datetime)
-        # Configure time edit to only allow whole hours
         self.datetime_picker.setTimeSpec(Qt.LocalTime)
-        self.datetime_picker.setEnabled(False)  # Disabled by default
+        self.datetime_picker.setEnabled(False)
         main_layout.addWidget(datetime_label)
         main_layout.addWidget(self.datetime_picker)
 
@@ -84,18 +89,24 @@ class RunSettings(QDialog):
         main_layout.addLayout(button_layout)
 
     def update_speed_label(self):
-        """Update label to show messages per second."""
+        """
+        Updates label to show messages per second.
+        """
         msg_per_sec = self.speed_slider.value()
         self.speed_value_label.setText(f"{msg_per_sec}")
     
     def toggle_datetime_picker(self, checked):
-        """Enable/disable datetime picker based on checkbox."""
+        """
+        Enables/disables datetime picker based on checkbox.
+        """
         self.datetime_picker.setEnabled(checked)
 
     def handle_start(self):
-        """Validate inputs and emit start_run signal with seconds per message and optional start datetime."""
+        """
+        Validates inputs and emits start_run signal with seconds per message and optional start datetime.
+        """
         msg_per_sec = self.speed_slider.value()
-        playback_rate = 1.0 / msg_per_sec  # seconds per message
+        playback_rate = 1.0 / msg_per_sec
 
         try:
             data_window = int(self.window_input.text())
@@ -118,11 +129,9 @@ class RunSettings(QDialog):
         # Get start datetime if custom start is enabled
         start_datetime = None
         if self.use_custom_start_checkbox.isChecked():
-            # Convert QDateTime to ISO string format (hele uren)
             dt = self.datetime_picker.dateTime()
-            # Zorg dat minuten en seconden 0 zijn
             dt.setTime(dt.time().addSecs(-dt.time().minute() * 60 - dt.time().second()))
             start_datetime = dt.toString("yyyy-MM-ddTHH:00:00")
 
-        self.accept()  # close the dialog
+        self.accept()
         self.start_run.emit(playback_rate, data_window, start_datetime)
