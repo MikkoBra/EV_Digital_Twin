@@ -1,12 +1,18 @@
 from PySide6.QtWidgets import QStackedWidget, QGraphicsOpacityEffect
-from PySide6.QtCore import QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import QPropertyAnimation
 
 class PageStack(QStackedWidget):
+    """
+    Allows for back-navigation and transition animations between pages.
+    """
     def __init__(self):
         super().__init__()
         self.anim = None
 
     def fade_to_index(self, index: int, duration=600):
+        """
+        Fades the current page out and fades a page at a specified index in.
+        """
         current_page = self.currentWidget()
         effect = QGraphicsOpacityEffect(current_page)
         current_page.setGraphicsEffect(effect)
@@ -20,6 +26,9 @@ class PageStack(QStackedWidget):
         self.anim = anim
 
     def _switch_and_fade_in(self, index, duration):
+        """
+        Switches to a page at a specified index and fades it in.
+        """
         self.setCurrentIndex(index)
         page = self.currentWidget()
         effect = QGraphicsOpacityEffect(page)

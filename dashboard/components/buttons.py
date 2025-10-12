@@ -3,6 +3,9 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import QSize
 
 class IconButton(QPushButton):
+    """
+    General class for a button with an icon. Defines default styling and behavior.
+    """
     def __init__(self, icon_path=None, color="#2d89ef", hover_color="#1e5cb3", size=QSize(40, 40), callback=None, parent=None):
         super().__init__(parent)
         self.setFixedSize(size)
@@ -24,6 +27,9 @@ class IconButton(QPushButton):
             self.clicked.connect(callback)
 
 class BackButton(IconButton):
+    """
+    Button that takes the user back to the previous page.
+    """
     def __init__(self, icon_path, callback, parent=None):
         super().__init__(
             icon_path=icon_path,
@@ -34,6 +40,10 @@ class BackButton(IconButton):
         )
 
 class RunButton(IconButton):
+    """
+    Button that opens a window for run settings, from which the data
+    replay can then be started.
+    """
     def __init__(self, icon_path, callback, parent=None):
         super().__init__(
             icon_path=icon_path,
@@ -45,6 +55,9 @@ class RunButton(IconButton):
         self.setIconSize(QSize(30, 30))
 
 class StopButton(IconButton):
+    """
+    Button that stops the data replay entirely.
+    """
     def __init__(self, icon_path, callback, parent=None):
         super().__init__(
             icon_path=icon_path,
@@ -56,6 +69,9 @@ class StopButton(IconButton):
         self.setIconSize(QSize(14, 14))
 
 class PauseButton(IconButton):
+    """
+    Button that pauses and unpauses the data replay.
+    """
     def __init__(self, icon_path, callback, parent=None):
         super().__init__(
             icon_path=icon_path,

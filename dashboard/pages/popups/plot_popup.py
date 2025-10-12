@@ -10,7 +10,9 @@ import pandas as pd
 from datetime import datetime
 
 class PlotPopup(QDialog):
-    """Popup that shows live-updating historical plot for a component."""
+    """
+    Popup that shows live-updating historical plot for a component.
+    """
     
     def __init__(self, title="Component Info", digital_twin=None, columns=None, 
                  current_state=None, parent=None, update_interval=1000):
@@ -53,13 +55,17 @@ class PlotPopup(QDialog):
             self.timer = None
     
     def closeEvent(self, event):
-        """Stop timer when popup is closed."""
+        """
+        Stops timer when popup is closed.
+        """
         if self.timer:
             self.timer.stop()
         super().closeEvent(event)
     
     def _get_unit(self, column):
-        """Get unit for a column."""
+        """
+        Gets unit for a column.
+        """
         units = {
             'SOC': '%',
             'SOH': '%',
@@ -76,7 +82,9 @@ class PlotPopup(QDialog):
         return units.get(column, '')
     
     def _create_plot_widget(self):
-        """Create matplotlib plot widget with subplots."""
+        """
+        Creates matplotlib plot widget with subplots.
+        """
         # Create matplotlib figure with subplots (one per parameter)
         num_plots = len(self.columns)
         fig = Figure(figsize=(10, 2.5 * num_plots), dpi=100)
@@ -85,7 +93,7 @@ class PlotPopup(QDialog):
         # Apply professional styling
         fig.patch.set_facecolor('#FAFAFA')
         
-        # Create subplots - one for each parameter
+        # Create subplots, one for each parameter
         self.axes = []
         for i in range(num_plots):
             ax = fig.add_subplot(num_plots, 1, i + 1)
@@ -104,7 +112,9 @@ class PlotPopup(QDialog):
         return canvas, self.axes
     
     def _update_plot(self):
-        """Update the plot with latest data from digital twin."""
+        """
+        Update the plot with latest data from digital twin.
+        """
         if not self.digital_twin or not hasattr(self, 'axes'):
             return
         
@@ -193,12 +203,11 @@ class PlotPopup(QDialog):
                 window_info = f" - Last {time_span:.1f} hours"
         
         self.setWindowTitle(f'{self.windowTitle().split(" (")[0]} ({len(df)} points{window_info})')
-        
-        # Redraw
         self.canvas.draw()
     
     def _apply_lookback_window(self, df, timestamp_col, lookback_days=7):
-        """Apply lookback window - keep only last N days of data.
+        """
+        Apply lookback window - keep only last N days of data.
         
         Args:
             df: DataFrame with timestamp column
@@ -223,7 +232,9 @@ class PlotPopup(QDialog):
         return filtered_df
     
     def _add_threshold_lines(self, ax, column, y_min, y_max):
-        """Add warning/danger threshold lines to plot."""
+        """
+        Adds warning/danger threshold lines to plot.
+        """
         thresholds = {
             'SOC': {'warning': 30, 'danger': 20, 'type': 'min'},
             'Battery_Temp': {'warning': 45, 'danger': 55, 'type': 'max'},
@@ -275,7 +286,9 @@ class PlotPopup(QDialog):
 
 
 class BatteryPopup(PlotPopup):
-    """Specialized popup for battery component."""
+    """
+    Specialized popup for battery component.
+    """
     
     def __init__(self, digital_twin=None, current_state=None, parent=None):
         super().__init__(
@@ -288,7 +301,9 @@ class BatteryPopup(PlotPopup):
 
 
 class MotorPopup(PlotPopup):
-    """Specialized popup for motor component."""
+    """
+    Specialized popup for motor component.
+    """
     
     def __init__(self, digital_twin=None, current_state=None, parent=None):
         super().__init__(
@@ -301,7 +316,9 @@ class MotorPopup(PlotPopup):
 
 
 class WheelPopup(PlotPopup):
-    """Specialized popup for wheel/tire component."""
+    """
+    Specialized popup for wheel/tire component.
+    """
     
     def __init__(self, digital_twin=None, current_state=None, parent=None):
         super().__init__(

@@ -3,11 +3,17 @@ from PySide6.QtCore import Qt, QRect, Signal, QPointF
 from PySide6.QtGui import QPainter, QColor, QPainterPath, QTransform, QCursor
 
 class Hotspot(QWidget):
+    """
+    Opaque GUI entity that is only visible when hovered and can be clicked.
+    """
     clicked = Signal()
     groups = {}
 
     def __init__(self, parent, original_rect: QRect, rotation=0, padding=20,
                  shape="circle", group=None, shear_x=0.0, shear_y=0.0):
+        """
+        Sets initial positioning data.
+        """
         super().__init__(parent)
         self.original_rect = original_rect
         self.rotation = rotation
@@ -27,6 +33,9 @@ class Hotspot(QWidget):
             Hotspot.groups.setdefault(group, []).append(self)
 
     def update_position(self, image_rect: QRect, scale_x=1.0, scale_y=1.0):
+        """
+        Updates the positioning data of the hotspot.
+        """
         new_w = int(self.original_rect.width() * scale_x) + 2 * self.padding
         new_h = int(self.original_rect.height() * scale_y) + 2 * self.padding
         new_x = int(image_rect.x() + self.original_rect.x() * scale_x - self.padding)
@@ -36,13 +45,16 @@ class Hotspot(QWidget):
         self.update()
 
     def set_hovered(self, hovered: bool):
+        """
+        Updates the "hovered" state of the hotspot.
+        """
         if self.hovered == hovered:
             return
         self.hovered = hovered
         self.update()
 
     def shape(self) -> QPainterPath:
-        """Return a QPainterPath for the exact clickable area with transforms applied."""
+        """Returns a QPainterPath for the exact clickable area with transforms applied."""
         rect = QRect(self.padding, self.padding,
                      max(0, self.width() - 2 * self.padding),
                      max(0, self.height() - 2 * self.padding))
@@ -63,6 +75,9 @@ class Hotspot(QWidget):
         return transform.map(path)
 
     def paintEvent(self, event):
+        """
+        Paints the hotspot onto the GUI.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
@@ -95,11 +110,17 @@ class Hotspot(QWidget):
         super().paintEvent(event)
 
     def enterEvent(self, event):
+        """
+        Describes what should happen when the hotspot is entered.
+        """
         global_pos = QCursor.pos()
         self._update_group_hover_from_global(global_pos)
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        """
+        Describes what should happen when the hotspot is left.
+        """
         if self.group and self.group in Hotspot.groups:
             for h in Hotspot.groups[self.group]:
                 h.set_hovered(False)
@@ -107,17 +128,10 @@ class Hotspot(QWidget):
             self.set_hovered(False)
         super().leaveEvent(event)
 
-    def mouseMoveEvent(self, event):
-        try:
-            local_pos = event.position()
-        except AttributeError:
-            local_pos = event.localPos()
-        global_pos = self.mapToGlobal(local_pos.toPoint())
-        self._update_group_hover_from_global(global_pos)
-        super().mouseMoveEvent(event)
-
     def _update_group_hover_from_global(self, global_pos):
-        """Helper: given a global mouse pos, set hovered for this widget or for its group."""
+        """
+        Helper: given a global mouse pos, sets hovered for this widget or for its group.
+        """
         if self.group and self.group in Hotspot.groups:
             any_contains = False
             for h in Hotspot.groups[self.group]:
@@ -134,6 +148,9 @@ class Hotspot(QWidget):
             self.set_hovered(self.shape().contains(p))
 
     def mousePressEvent(self, event):
+        """
+        Describes what should happen when the hotspot is clicked.
+        """
         try:
             pos = event.position()
         except AttributeError:
@@ -144,6 +161,9 @@ class Hotspot(QWidget):
         super().mousePressEvent(event)
     
     def mouseMoveEvent(self, event):
+        """
+        Describes what should happen when the mouse is moved inside the hotspot.
+        """
         try:
             local_pos = event.position()
         except AttributeError:

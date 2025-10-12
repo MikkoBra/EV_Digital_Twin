@@ -4,16 +4,20 @@ from pages.title import Title
 from pages.car import Car
 import sys
 from pathlib import Path
-# Add parent directory to path to import System_State
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from System_State import DigitalTwin
 
 class MainWindow(QMainWindow):
+    """
+    The window containing the GUI and its pages.
+    """
     def __init__(self):
+        """
+        Initializes the main window with a set aspect ratio that can be
+        scaled with the "scale" parameter.
+        """
         super().__init__()
         self.setWindowTitle("EV Digital Twin")
-        
-        # Initialize Digital Twin for historical data
         self.digital_twin = DigitalTwin()
 
         scale = 1.2
@@ -33,7 +37,7 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, event):
         """
-        Force the window to maintain the initial aspect ratio.
+        Forces the window to maintain the initial aspect ratio.
         """
         w = self.width()
         h = self.height()
