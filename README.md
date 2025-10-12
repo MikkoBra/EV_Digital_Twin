@@ -55,16 +55,15 @@ This starts the EV Digital Twin Dashboard, providing a visual representation of 
 
 Clicking the green play button opens a settings window. Once the desired settings are input, the data replay can be started. Note that although
 replay speed can be set, the replay may slow down significantly once the ML models have enough historical data to start making predictions.
-Currently, the model breaks if another run is started while one is ongoing. Refrain from doing so.
 
 ### Pausing Data Replay
 
-Clicking the yellow pause button pauses the data replay. The replay continues when this button is pressed again. Do not use the green play
-button to resume the simulation, as the pause button does not disconnect the model from the messaging service.
+Clicking the yellow pause button pauses the data replay. The replay continues when this button is pressed again. The green play
+button can also be used to resume the simulation.
 
 ### Stopping Data Replay
 
-To fully end the simulation and disconnect from the messaging service, press the red stop button. To resume a simulation, the green play
+To fully end the simulation and disconnect from the messaging service, press the red stop button. To start a new simulation, the green play
 button must be pressed.
 
 ### Data Overviews
