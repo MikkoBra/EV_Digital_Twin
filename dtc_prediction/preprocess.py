@@ -52,6 +52,7 @@ def infer_features(df: pd.DataFrame, cfg: DTC_Config.Config) -> List[str]:
     return feats
 
 def _fit_group(bundle: Dict[str, Any], gdf: pd.DataFrame, g_key: Any) -> None:
+    # fit imputers and scalers for a single group and store in bundle
     for f in bundle["features"]:
         policy    = bundle["policy"][f]
 
@@ -92,21 +93,22 @@ def _fit_group(bundle: Dict[str, Any], gdf: pd.DataFrame, g_key: Any) -> None:
         bundle["imputers"][g_key][f] = imp
         bundle["scalers"][g_key][f]  = scaler
 
-def _apply_to_index(out, idx, features, bundle, g_key) -> None:
+def _apply_to_index(df: pd.DataFrame, idx, features: List[str], bundle, g_key) -> None:
+    # transforms data at given index for a single group using bundle scalar and imputer
     for f in features:
         policy    = bundle["policy"][f]
         sc        = bundle["scalers"][g_key][f]
         imp       = bundle["imputers"][g_key][f]
 
-        col = pd.to_numeric(out.iloc[idx][f], errors="coerce").values.reshape(-1, 1)
+        col = pd.to_numeric(df.iloc[idx][f], errors="coerce").values.reshape(-1, 1)
 
         if policy == "passthrough":
-            out.iloc[idx, out.columns.get_loc(f)] = imp.transform(col).ravel()
+            df.iloc[idx, df.columns.get_loc(f)] = imp.transform(col).ravel()
             continue
 
         col_imp = imp.transform(col)
         val = sc.transform(col_imp) if sc is not None else col_imp
-        out.iloc[idx, out.columns.get_loc(f)] = val.ravel()
+        df.iloc[idx, df.columns.get_loc(f)] = val.ravel()
 
 def fit_scaler(
     df: pd.DataFrame,
@@ -149,31 +151,27 @@ def fit_scaler(
 
     return bundle
 
-def transform(df: pd.DataFrame, bundle: dict) -> pd.DataFrame:
+def transform_df(df: pd.DataFrame, bundle: dict) -> pd.DataFrame:
     out = df.copy()
     feat_list = bundle["features"]
-    # display(out)
 
     missing = [f for f in feat_list if f not in out.columns]
     if missing:
         raise KeyError(f"transform(): missing features in df: {missing}")
 
     grp_col = bundle["group_col"]
-    # print(grp_col)
+
     if grp_col in feat_list:
         raise ValueError(f"transform(): group column '{grp_col}' must not be in features.")
 
     out[feat_list] = out[feat_list].apply(pd.to_numeric, errors="coerce").astype("float64")
-    # print(out[feat_list])
 
     needed_flags = [fl for fl in (bundle.get("masked_flags") or {}).values() if fl]
     missing_flags = [fl for fl in needed_flags if fl not in out.columns]
-    # print(needed_flags)
     if missing_flags:
         raise KeyError(f"transform(): masked-flag columns missing: {missing_flags}")
 
     if grp_col:
-        # print(out.columns)
         if grp_col not in out.columns:
             raise KeyError(f"transform(): expected group column '{grp_col}' not found.")
         scalers = bundle["scalers"]
