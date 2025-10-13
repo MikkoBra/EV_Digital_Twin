@@ -6,7 +6,8 @@ import io
 import joblib
 import tensorflow as tf
 import anomaly_detection.model_configure as ad_config
-from dtc_prediction.DTC_Config import Config as dtc_cfg, get_model_path, get_scaler_path
+from dtc_prediction.DTC_Config import Config as dtc_cfg
+from dtc_prediction.DTC_Config import get_model_path, get_scaler_path
 import dtc_prediction.DTC_Predictor as dtc_pred
 import os
 
