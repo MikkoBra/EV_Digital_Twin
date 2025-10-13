@@ -20,6 +20,7 @@ ROBUST_COLS = {
     "Battery_Temp", 
     "Motor_RPM", "Motor_Torque", "Motor_Temp",
 }
+SEQUENCE_LEN=168
 @dataclass
 class Config:
     cwd = os.getcwd()
@@ -31,7 +32,7 @@ class Config:
     features: List[str] | None = None
     timestamp_format_try: str = "%d-%m-%y %H:%M"
 
-    seq_len: int = 168
+    seq_len: int = SEQUENCE_LEN
     horizon: int = 24
     stride: int = 1
 
@@ -61,6 +62,6 @@ class Config:
 
 
 def get_model_path() -> str:
-    return path.join(Config.model_dir, Config.model_name)
+    return path.join(Config.model_dir,"lstm_dtc.keras")
 def get_scaler_path() -> str:
-    return path.join(Config.model_dir, Config.scaler_name)  
+    return path.join(Config.model_dir, "config_dtc.json")  
