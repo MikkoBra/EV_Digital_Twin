@@ -6,8 +6,9 @@ from typing import Dict, List,Tuple, Any, Optional
 import tensorflow as tf
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, RobustScaler
-from DTC_Config import PASSTHROUGH_COLS, ROBUST_COLS
-import DTC_Config
+from . import DTC_Config as DTC_Config
+from .DTC_Config import PASSTHROUGH_COLS, ROBUST_COLS
+
 
 def parse_timestamp(series: pd.Series,
                     fmt: str = None,
