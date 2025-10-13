@@ -1,8 +1,8 @@
 {
-  "model_path": "models\\lstm_dtc.keras.keras",
-  "bundle_path": "models\\scaler_dtc.npy",
-  "config_path": "models\\config_dtc.json",
-  "threshold": 0.7923927307128906,
+  "model_path": "C:\\Users\\yonat\\OneDrive\\Bureaublad\\Masters\\Digital Twin Engineering\\EV_Digital_Twin\\models\\lstm_dtc.keras",
+  "bundle_path": "C:\\Users\\yonat\\OneDrive\\Bureaublad\\Masters\\Digital Twin Engineering\\EV_Digital_Twin\\models\\scaler_dtc.npy",
+  "config_path": "C:\\Users\\yonat\\OneDrive\\Bureaublad\\Masters\\Digital Twin Engineering\\EV_Digital_Twin\\models\\config_dtc.json",
+  "threshold": 0.792,
   "seq_len": 168,
   "horizon": 24,
   "features": [
