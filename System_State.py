@@ -6,20 +6,19 @@ import io
 import joblib
 import tensorflow as tf
 import anomaly_detection.model_configure as ad_config
-from dtc_prediction.DTC_Config import Config as dtc_cfg
-from dtc_prediction.DTC_Config import get_model_path, get_scaler_path
+import dtc_prediction.DTC_Config as dtc_cfg
 import dtc_prediction.DTC_Predictor as dtc_pred
+from root_dir import ROOT_DIR
 import os
-
+DATA_PATH= os.path.join(ROOT_DIR, "data")
+HEAVY_PATH = os.path.join(DATA_PATH, "heavy_user.csv") 
 
 class State:
     def __init__(self, TimeStamp, SOC, SOH, Charging_Cycles,
                  Battery_Temp, Motor_RPM, Motor_Torque, Motor_Temp,
                  Brake_Pad_Wear, Charging_Voltage, Tire_Pressure, DTC):
-        
         # Sensor data
-        heavy_path = os.path.join(dtc_cfg.data_dir, "heavy_user.csv") # 
-        self.vehicle_id = os.path.splitext(os.path.basename(heavy_path))[0].replace("_user", "")
+        self.vehicle_id = os.path.splitext(os.path.basename(HEAVY_PATH))[0].replace("_user", "")
         self.timestamp = pd.to_datetime(TimeStamp)
         self.soc = SOC
         self.soh = SOH
@@ -64,10 +63,8 @@ class DigitalTwin:
         # load the RobustScaler and the anomaly detection model
         self.anomaly_model = joblib.load(ad_config.ANOMALY_MODEL_PATH)
         self.anomaly_scaler = joblib.load(ad_config.SCALER_PATH)
-        # Load DTC model with TensorFlow (it's a Keras model)
-        self.dtc_model = tf.keras.models.load_model(get_model_path())
-        # Load DTC scaler with joblib (it's a sklearn/joblib bundle)
-        self.dtc_scaler = joblib.load(get_scaler_path())
+        self.dtc_model = tf.keras.models.load_model(dtc_cfg.get_model_path())
+        self.dtc_scaler = joblib.load(dtc_cfg.get_scaler_path())
 
         #initialize the data storage structures
         self.current_state = None
@@ -75,10 +72,8 @@ class DigitalTwin:
         self.historical_dataset = pd.DataFrame(columns=['TimeStamp', 'SOC', 'SOH', 'Charging_Cycles', 'Battery_Temp',
        'Motor_RPM', 'Motor_Torque', 'Motor_Temp', 'Brake_Pad_Wear',
        'Charging_Voltage', 'Tire_Pressure', 'DTC'])
-        
-        # Vehicle ID for DTC prediction (extracted from data file path)
-        heavy_path = os.path.join(dtc_cfg.data_dir, "heavy_user.csv")
-        self.vehicle_id = os.path.splitext(os.path.basename(heavy_path))[0].replace("_user", "")
+
+       self.vehicle_id = os.path.splitext(os.path.basename(HEAVY_PATH))[0].replace("_user", "")
            
         
 
@@ -110,14 +105,14 @@ class DigitalTwin:
             )
 
         ## DTC Prediction
-        if len(self.historical_dataset) >= dtc_cfg.seq_len:
+        if len(self.historical_dataset) >= dtc_cfg.SEQUENCE_LEN:
             data = self.historical_dataset.copy()
             data['vehicle_id'] = self.vehicle_id
             current_state.dtc_score, current_state.dtc_label= dtc_pred.predict(
                 data,
                 self.dtc_model,
                 self.dtc_scaler,
-                seq_len=dtc_cfg.seq_len
+                seq_len=dtc_cfg.SEQUENCE_LEN
             )
         
         # add current state to the historical states
