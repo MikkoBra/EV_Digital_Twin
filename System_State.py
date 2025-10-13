@@ -31,7 +31,15 @@ class State:
         self.charging_voltage = Charging_Voltage
         self.tire_pressure = Tire_Pressure
         self.dtc = DTC
-        
+
+        # Anomaly data
+        self.is_anomaly = False
+        self.anomaly_score = None
+
+        # DTC Prediction data
+        self.dtc_score = None
+        self.dtc_label = False
+
     def to_dict(self):  
         """Convert State to dictionary."""
         return {
@@ -49,14 +57,6 @@ class State:
             'DTC': self.dtc
         }
 
-        # Anomaly data
-        self.is_anomaly = False
-        self.anomaly_score = None
-
-        # DTC Prediction data
-        self.dtc_score = None
-        self.dtc_label = False
-
 
 class DigitalTwin:
     def __init__(self):
@@ -73,7 +73,7 @@ class DigitalTwin:
        'Motor_RPM', 'Motor_Torque', 'Motor_Temp', 'Brake_Pad_Wear',
        'Charging_Voltage', 'Tire_Pressure', 'DTC'])
 
-       self.vehicle_id = os.path.splitext(os.path.basename(HEAVY_PATH))[0].replace("_user", "")
+        self.vehicle_id = os.path.splitext(os.path.basename(HEAVY_PATH))[0].replace("_user", "")
            
         
 
