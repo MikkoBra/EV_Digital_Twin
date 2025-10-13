@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-from typing import Dict, List,Tuple, Any, Optional
+from typing import Dict, List, Any, Optional
 
 import tensorflow as tf
 from sklearn.impute import SimpleImputer
@@ -175,8 +175,6 @@ def transform_df(df: pd.DataFrame, bundle: dict) -> pd.DataFrame:
         if grp_col not in out.columns:
             raise KeyError(f"transform(): expected group column '{grp_col}' not found.")
         scalers = bundle["scalers"]
-        if not scalers:
-            raise RuntimeError("transform(): empty scalers bundle. Did you run fit_scaler on TRAIN?")
         fallback_key = next(iter(scalers))
         groups = out.groupby(grp_col, sort=False, dropna=False).indices
         for g, pos_idx in groups.items():

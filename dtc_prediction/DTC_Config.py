@@ -32,18 +32,18 @@ class Config:
     features: List[str] | None = None
     timestamp_format_try: str = "%d-%m-%y %H:%M"
 
-    seq_len: int = SEQUENCE_LEN
-    horizon: int = 24
-    stride: int = 1
-
     val_ratio_last: float = 0.1
     test_ratio_last: float = 0.2
     optimizer: str = 'Adam'
     loss: str = 'binary_crossentropy'
 
+    seq_len: int = SEQUENCE_LEN
+    horizon: int = 24
+    stride: int = 1
+
     batch_size: int = 256
     epochs: int = 40
-    lr: float = 1e-3
+    lr: float = 4e-3
     hidden: int = 128
     dropout: float = 0.2
     bidirectional: bool = True
@@ -55,9 +55,6 @@ class Config:
     model_name: str = "lstm_dtc"
     scaler_name: str = "scaler_dtc.npy"
     config_name: str = "config_dtc.json"
-    
-    def set_threshold(self, thresh: float) -> None:
-        self.threshold = thresh
 
 
 
