@@ -6,13 +6,8 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import IsolationForest
 from model_configure import WINDOW_SIZE, PCA_COMPONENTS, TEST_RATIO, CONTAMINATION, DATA_PATH, ANOMALY_MODEL_PATH, SCALER_PATH, PCA_PATH
-
-import sys
-from pathlib import Path
 import json
 
-
-from root_dir import ROOT_DIR
 
 # read the data into pandas dataframe
 ev_data = pd.read_csv(DATA_PATH)
