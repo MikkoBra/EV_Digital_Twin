@@ -1,8 +1,8 @@
 from anomaly_detection import data_preprocessing
 
-def inference(data, model, scaler):
+def inference(data, model, scaler, pca):
     # preprocess the data for the isolation forrest model
-    data = data_preprocessing.preprocess_data(data, scaler)
+    data = data_preprocessing.preprocess_data(data, scaler, pca)
 
     # model inference
     pred = model.predict(data)[0]

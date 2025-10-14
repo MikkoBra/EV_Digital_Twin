@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-import System_State
 import anomaly_detection.model_configure as ad_config
+
 
 def compute_window_features(data):
     # These features do not need lag/window features
@@ -69,7 +69,7 @@ def feature_engineering(data):
     return data
 
 
-def preprocess_data(data, scaler):
+def preprocess_data(data, scaler, pca):
     # the charging voltage is a constant so not informative for the AI models
     data.drop("Charging_Voltage", axis=1, inplace=True)
 
@@ -89,7 +89,10 @@ def preprocess_data(data, scaler):
     scaled_data = scaler.transform(data)
     scaled_df = pd.DataFrame(scaled_data, columns=data.columns)
 
-    return scaled_df
+    # perform principal component analysis to reduce the dimensionality
+    scaled_pca_data = pca.transform(scaled_df)    
+
+    return scaled_pca_data
 
 
 

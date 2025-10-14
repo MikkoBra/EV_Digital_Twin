@@ -2,12 +2,13 @@ import pandas as pd
 import numpy as np
 import joblib
 from sklearn.preprocessing import RobustScaler
+from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import IsolationForest
-from model_configure import WINDOW_SIZE
+from model_configure import WINDOW_SIZE, PCA_COMPONENTS, TEST_RATIO, CONTAMINATION, DATA_PATH, ANOMALY_MODEL_PATH, SCALER_PATH, PCA_PATH
 
 # read the data into pandas dataframe
-ev_data = pd.read_csv("data/heavy_user.csv")
+ev_data = pd.read_csv(DATA_PATH)
 
 # give the timestamp column a name
 ev_data.rename(columns={"Unnamed: 0": "TimeStamp"}, inplace=True)
@@ -89,13 +90,21 @@ scaler = RobustScaler().fit(ev_data_reduced)
 scaled_data = scaler.transform(ev_data_reduced)
 scaled_df = pd.DataFrame(scaled_data, columns=ev_data_reduced.columns)
 
+pca = PCA(n_components=PCA_COMPONENTS)
+pca.fit(scaled_df)
+scaled_pca_data = pca.transform(scaled_df)
+
 # train en test split without shuffle to keep the order intact
-X_train, X_test = train_test_split(scaled_df, test_size=0.2, shuffle=False)
+X_train, X_test = train_test_split(scaled_pca_data, test_size=TEST_RATIO, shuffle=False)
 
 # train the model on the trainings data
-IF_model = IsolationForest(random_state=0, contamination=0.03).fit(X_train)
+IF_model = IsolationForest(random_state=0, contamination=CONTAMINATION).fit(X_train)
 
 # store the scale and model parameters
-joblib.dump(scaler, "anomaly_detection/scaler.joblib")
-joblib.dump(IF_model, "anomaly_detection/IF_anomaly_model.joblib")
+joblib.dump(scaler, SCALER_PATH)
+joblib.dump(pca, PCA_PATH)
+joblib.dump(IF_model, ANOMALY_MODEL_PATH)
 
+print(ANOMALY_MODEL_PATH)
+print(SCALER_PATH)
+print(PCA_PATH)

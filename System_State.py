@@ -60,9 +60,10 @@ class State:
 
 class DigitalTwin:
     def __init__(self):
-        # load the RobustScaler and the anomaly detection model
+        # load the models for inference
         self.anomaly_model = joblib.load(ad_config.ANOMALY_MODEL_PATH)
         self.anomaly_scaler = joblib.load(ad_config.SCALER_PATH)
+        self.anomaly_pca = joblib.load(ad_config.PCA_PATH)
         self.dtc_model = tf.keras.models.load_model(dtc_cfg.get_model_path())
         self.dtc_scaler = joblib.load(dtc_cfg.get_scaler_path())
 
@@ -87,22 +88,14 @@ class DigitalTwin:
         self.historical_dataset["TimeStamp"] = pd.to_datetime(self.historical_dataset["TimeStamp"])
 
         # Anomaly detection, we first check wheter there is enough historical data to compute the features
-        # (TODO: in the dashboard we can use the anomaly score to determine the action that needs to be taken, e.g. 
-        # if score < -0.4 put up message that ev is immediately in safe modus if score < -0.2  & > -0.4  only give warning etc.)
         if len(self.historical_dataset) > ad_config.WINDOW_SIZE:
             data_window = self.historical_dataset.tail(ad_config.WINDOW_SIZE + 1).copy()
-            is_anomaly, anomaly_score = ad.inference(data_window, self.anomaly_model, self.anomaly_scaler)
+            is_anomaly, anomaly_score = ad.inference(data_window, self.anomaly_model, self.anomaly_scaler, self.anomaly_pca)
         
             # set the anomaly info in the current state
             current_state.is_anomaly = is_anomaly
             current_state.anomaly_score = anomaly_score
 
-            # TODO: this print statement can be removed
-            print(
-                f"On Timestamp: {current_state.timestamp}, "
-                f"Is Anomaly: {current_state.is_anomaly}, "
-                f"Anomaly Score: {current_state.anomaly_score:.4f}"
-            )
 
         ## DTC Prediction
         if len(self.historical_dataset) >= dtc_cfg.SEQUENCE_LEN:
@@ -114,7 +107,6 @@ class DigitalTwin:
                 self.dtc_scaler,
                 seq_len=dtc_cfg.SEQUENCE_LEN
             )
-        
         # add current state to the historical states
         self.historical_states.append(current_state)
         self.current_state = current_state
