@@ -6,8 +6,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import IsolationForest
 from model_configure import WINDOW_SIZE
 
+import sys
+from pathlib import Path
+import json
+
+PARENT = Path(__file__).resolve().parent.parent if "__file__" in globals() else Path.cwd().parent
+sys.path.insert(0, str(PARENT))
+
+from root_dir import ROOT_DIR
+
 # read the data into pandas dataframe
-ev_data = pd.read_csv("data/heavy_user.csv")
+ev_data = pd.read_csv(f"{ROOT_DIR}/data/heavy_user.csv")
 
 # give the timestamp column a name
 ev_data.rename(columns={"Unnamed: 0": "TimeStamp"}, inplace=True)
