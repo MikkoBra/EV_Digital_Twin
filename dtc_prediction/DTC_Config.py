@@ -60,5 +60,7 @@ class Config:
 def get_model_path() -> str:
     return path.join(Config.model_dir,"lstm_dtc.keras")
 def get_scaler_path() -> str:
-
     return path.join(Config.model_dir, "scaler_dtc.pkl")  
+
+def load_threshold() -> float:
+    return Config.threshold
