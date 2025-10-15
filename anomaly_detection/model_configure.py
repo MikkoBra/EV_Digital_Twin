@@ -25,5 +25,5 @@ DATA_PATH = os.path.join(ROOT_DIR, "data", "heavy_user.csv")
 # model paths
 ANOMALY_MODEL_PATH = os.path.join(ROOT_DIR, "anomaly_detection", "IF_anomaly_model.joblib")
 SCALER_PATH = os.path.join(ROOT_DIR, "anomaly_detection", "scaler.joblib")
-PCA_PATH = os.path.join(ROOT_DIR, "anomaly_detection", "pca.joblib")
+PCA_PATH = os.path.join(ROOT_DIR, "anomaly_detection", "PCA.joblib")
 
