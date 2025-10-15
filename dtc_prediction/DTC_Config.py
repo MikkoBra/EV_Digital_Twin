@@ -42,18 +42,17 @@ class Config:
     stride: int = 1
 
     batch_size: int = 256
-    epochs: int = 40
-    lr: float = 4e-3
-    hidden: int = 128
-    dropout: float = 0.2
+    epochs: int = 56
+    lr: float = 0.0005403618929963917
+    hidden: int = 224
+    dropout: float = 0.16123225062685403
     bidirectional: bool = True
-    stateful: bool = False
-    threshold: float = 0.5
+    threshold: float = 0.7758349180221558
 
     seed: int = 47
     model_dir: str = path.join(ROOT_DIR,"models")
     model_name: str = "lstm_dtc"
-    scaler_name: str = "scaler_dtc.npy"
+    scaler_name: str = "scaler_dtc.pkl"
     config_name: str = "config_dtc.json"
 
 
