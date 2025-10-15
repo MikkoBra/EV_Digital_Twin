@@ -2,16 +2,7 @@
 from __future__ import annotations
 
 from .preprocess import transform_df
-import sys
-from pathlib import Path
 from dtc_prediction import DTC_Config
-
-PARENT = Path(__file__).resolve().parent.parent if "__file__" in globals() else Path.cwd().parent
-sys.path.insert(0, str(PARENT))
-
-from root_dir import ROOT_DIR
-
-from os import path
 
 
 THRESHOLD = DTC_Config.load_threshold()
